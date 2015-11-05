@@ -33,8 +33,8 @@ module.exports = function(grunt) {
                 undef: true,
                 curly: true,
                 eqnull: true,
-                predef: ['window', 'document', 'Image', 'Resources',
-                    'Player', 'Block', 'Engine', 'Helpers'
+                predef: ['console', 'window', 'document', 'Image', 'Resources',
+                    'Player', 'Block', 'Enemy', 'Engine', 'Helpers'
                 ]
             }
         },

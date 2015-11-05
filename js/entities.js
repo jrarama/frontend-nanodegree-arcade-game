@@ -69,6 +69,29 @@
 		}
 	};
 
+	var Enemy = function(ctx, x, y, speed) {
+		this.context = ctx;
+		this.x = x;
+		this.y = y;
+		this.speed = speed;
+		this.sprite = Enemy.sprite;
+	};
+
+	Enemy.sprite = "images/enemy-bug.png";
+	Enemy.prototype.render = function() {
+		var img = Resources.get(this.sprite);
+		this.context.drawImage(img, this.x * img.width, this.y * blockHeight - 20);
+	};
+	Enemy.prototype.update = function(dt) {
+		this.x += (this.speed * dt);
+	};
+	Enemy.prototype.reset = function() {
+		this.x = -1;
+        this.y = Math.floor(Math.random() * 3 + 1);
+        this.speed = 1 + Math.random() * 2;
+	};
+
 	window.Player = Player;
 	window.Block = Block;
+	window.Enemy = Enemy;
 })();

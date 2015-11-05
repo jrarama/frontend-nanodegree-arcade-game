@@ -98,10 +98,14 @@
      * render methods.
      */
     function updateEntities(dt) {
-        /*allEnemies.forEach(function(enemy) {
+        allEnemies.forEach(function(enemy) {
             enemy.update(dt);
+
+            if (enemy.x >= columns) {
+                enemy.reset();
+            }
         });
-        player.update();*/
+        //player.update();
     }
 
     /* This function initially draws the "game level", it will then call
@@ -117,15 +121,19 @@
             block.render();
         });
 
-        player.render();
+        renderEntities();
     }
 
     /* This function is called by the render function and is called on each game
      * tick. It's purpose is to then call the render functions you have defined
-     * on your enemy and player entities within app.js
+     * on your enemy and player entities
      */
     function renderEntities() {
+        player.render();
 
+        allEnemies.forEach(function(enemy) {
+            enemy.render();
+        });
     }
 
     /* This function does nothing but it could have been a good place to
@@ -140,6 +148,7 @@
         var images = [];
         images = images.concat(Player.getSprites());
         images = images.concat(Block.getSprites());
+        images.push(Enemy.sprite);
 
         Resources.load(images);
         Resources.onReady(init);
@@ -149,11 +158,25 @@
         allEnemies = [];
         blocks =  [];
 
+        initBlocks();
+        initPlayer();
+        initEnemies();
+    }
+
+    function initPlayer() {
         var characters = Helpers.getObjKeys(Player.characters);
         var charInd = Math.floor(Math.random() * characters.length);
         var xPos = Math.floor(Math.random() * columns);
         player = new Player(ctx, characters[charInd], xPos, rows.length - 1);
-        initBlocks();
+    }
+
+    function initEnemies() {
+        var i, x, y, s;
+        for (i = 0; i < 3; i++) {
+            var enemy = new Enemy(ctx);
+            enemy.reset();
+            allEnemies.push(enemy);
+        }
     }
 
     function initBlocks() {

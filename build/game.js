@@ -213,8 +213,31 @@
 		}
 	};
 
+	var Enemy = function(ctx, x, y, speed) {
+		this.context = ctx;
+		this.x = x;
+		this.y = y;
+		this.speed = speed;
+		this.sprite = Enemy.sprite;
+	};
+
+	Enemy.sprite = "images/enemy-bug.png";
+	Enemy.prototype.render = function() {
+		var img = Resources.get(this.sprite);
+		this.context.drawImage(img, this.x * img.width, this.y * blockHeight - 20);
+	};
+	Enemy.prototype.update = function(dt) {
+		this.x += (this.speed * dt);
+	};
+	Enemy.prototype.reset = function() {
+		this.x = -1;
+        this.y = Math.floor(Math.random() * 3 + 1);
+        this.speed = 1 + Math.random() * 2;
+	};
+
 	window.Player = Player;
 	window.Block = Block;
+	window.Enemy = Enemy;
 })();
 /* Engine.js
  * This file provides the game loop functionality (update entities and render),
@@ -316,10 +339,14 @@
      * render methods.
      */
     function updateEntities(dt) {
-        /*allEnemies.forEach(function(enemy) {
+        allEnemies.forEach(function(enemy) {
             enemy.update(dt);
+
+            if (enemy.x >= columns) {
+                enemy.reset();
+            }
         });
-        player.update();*/
+        //player.update();
     }
 
     /* This function initially draws the "game level", it will then call
@@ -335,15 +362,19 @@
             block.render();
         });
 
-        player.render();
+        renderEntities();
     }
 
     /* This function is called by the render function and is called on each game
      * tick. It's purpose is to then call the render functions you have defined
-     * on your enemy and player entities within app.js
+     * on your enemy and player entities
      */
     function renderEntities() {
+        player.render();
 
+        allEnemies.forEach(function(enemy) {
+            enemy.render();
+        });
     }
 
     /* This function does nothing but it could have been a good place to
@@ -358,6 +389,7 @@
         var images = [];
         images = images.concat(Player.getSprites());
         images = images.concat(Block.getSprites());
+        images.push(Enemy.sprite);
 
         Resources.load(images);
         Resources.onReady(init);
@@ -367,11 +399,25 @@
         allEnemies = [];
         blocks =  [];
 
+        initBlocks();
+        initPlayer();
+        initEnemies();
+    }
+
+    function initPlayer() {
         var characters = Helpers.getObjKeys(Player.characters);
         var charInd = Math.floor(Math.random() * characters.length);
         var xPos = Math.floor(Math.random() * columns);
         player = new Player(ctx, characters[charInd], xPos, rows.length - 1);
-        initBlocks();
+    }
+
+    function initEnemies() {
+        var i, x, y, s;
+        for (i = 0; i < 3; i++) {
+            var enemy = new Enemy(ctx);
+            enemy.reset();
+            allEnemies.push(enemy);
+        }
     }
 
     function initBlocks() {
