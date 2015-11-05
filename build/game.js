@@ -1,28 +1,34 @@
 (function() {
-	window.Helpers = {
-		getObjValues: function(obj) {
-			var key, items = obj || {};
-			var arr = [];
-			for (key in items) {
-				if (items.hasOwnProperty(key)) {
-					arr.push(items[key]);
-				}
-			}
+    window.Helpers = {
+        getObjValues: function(obj) {
+            var key, items = obj || {};
+            var arr = [];
+            for (key in items) {
+                if (items.hasOwnProperty(key)) {
+                    arr.push(items[key]);
+                }
+            }
 
-			return arr;
-		},
-		getObjKeys: function(obj) {
-			var key, items = obj || {};
-			var arr = [];
-			for (key in items) {
-				if (items.hasOwnProperty(key)) {
-					arr.push(key);
-				}
-			}
+            return arr;
+        },
+        getObjKeys: function(obj) {
+            var key, items = obj || {};
+            var arr = [];
+            for (key in items) {
+                if (items.hasOwnProperty(key)) {
+                    arr.push(key);
+                }
+            }
 
-			return arr;
-		}
-	};
+            return arr;
+        },
+        within: function(value, min, max) {
+            return value != null && value >= min && value < max;
+        },
+        withinGrid: function(pos, rows, columns) {
+            return pos && Helpers.within(pos.x, 0, columns) && Helpers.within(pos.y, 0, rows);
+        }
+    };
 })();
 /* Resources.js
  * This is simple an image loading utility. It eases the process of loading
@@ -179,10 +185,32 @@
 		'cat-girl': 'images/char-cat-girl.png',
 		'pink-girl': 'images/char-pink-girl.png'
 	};
+	Player.validMoves = {
+		left: [-1, 0],
+		right: [1, 0],
+		up: [0, -1],
+		down: [0, 1]
+	};
 
 	Player.prototype.render = function() {
 		var img = Resources.get(this.sprite);
 		this.context.drawImage(img, this.x * img.width, this.y * blockHeight - 10);
+	};
+
+	Player.prototype.move = function(move, rows, columns) {
+		var movement = Player.validMoves[move];
+
+		if (!movement || movement.length != 2) {
+			return;
+		}
+
+		var newX = this.x + movement[0];
+		var newY = this.y + movement[1];
+
+		if (Helpers.withinGrid({ x: newX, y: newY }, rows, columns)) {
+			this.x = newX;
+			this.y = newY;
+		}
 	};
 
 	window.Player = Player;
@@ -215,6 +243,7 @@
         ctx = canvas.getContext('2d'),
         columns = 5,
         rows = ['water', 'stone', 'stone', 'stone', 'grass', 'grass'],
+        nRows = rows.length,
         player = null,
         allEnemies = [],
         blocks = [],
@@ -251,7 +280,7 @@
         /* Use the browser's requestAnimationFrame function to call this
          * function again as soon as the browser is able to draw another frame.
          */
-        //win.requestAnimationFrame(main);
+        win.requestAnimationFrame(main);
     }
 
     /* This function does some initial setup that should only occur once,
@@ -293,13 +322,6 @@
         player.update();*/
     }
 
-    function within(value, min, max) {
-        return value != null && value >= min && value <= max;
-    }
-
-    function withinGrid(pos) {
-        return pos && within(pos.x, 0, columns) && within(pos.y, 0, rows.length);
-    }
     /* This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
      * game tick (or loop of the game engine) because that's how games work -
@@ -307,13 +329,13 @@
      * they are just drawing the entire screen over and over.
      */
     function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         blocks.forEach(function(block) {
             block.render();
         });
 
-        if (withinGrid(player)) {
-            player.render();
-        }
+        player.render();
     }
 
     /* This function is called by the render function and is called on each game
@@ -353,7 +375,7 @@
     }
 
     function initBlocks() {
-        var nRows = rows.length, row, col;
+        var row, col;
 
         for (row = 0; row < nRows; row++) {
             for (col = 0; col < columns; col++) {
@@ -368,18 +390,22 @@
      */
     global.ctx = ctx;
 
+    doc.addEventListener('keyup', function(e) {
+        var allowedKeys = {
+            37: 'left',
+            38: 'up',
+            39: 'right',
+            40: 'down'
+        };
+
+        if (player) {
+            player.move(allowedKeys[e.keyCode], nRows, columns);
+        }
+    });
+
     window.Engine = {
         init: loadResources
     };
 
 })(this);
-document.addEventListener('keyup', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
-});
-
 Engine.init();
