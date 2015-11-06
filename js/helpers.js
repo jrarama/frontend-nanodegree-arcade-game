@@ -1,5 +1,15 @@
+/**
+ * Helpers.js
+ * All helper functions that needs to be available in all scripts
+ * are maintained here.
+ */
 (function() {
+    /** Make Helpers available globally by setting it a property of window. */
     window.Helpers = {
+        /**
+         * This function is used to loop through each object property
+         * and return all the values as an array
+         */
         getObjValues: function(obj) {
             var key, items = obj || {};
             var arr = [];
@@ -11,6 +21,10 @@
 
             return arr;
         },
+        /**
+         * This function is used to loop through each object property
+         * and return all the keys as an array
+         */
         getObjKeys: function(obj) {
             var key, items = obj || {};
             var arr = [];
@@ -22,11 +36,13 @@
 
             return arr;
         },
+        /** Used to check if a value is with a range  */
         within: function(value, min, max) {
-            return value != null && value >= min && value < max;
+            return value != null && value >= min && value <= max;
         },
+        /** Used to check whether a position is inside the bounds of the game grid */
         withinGrid: function(pos, rows, columns) {
-            return pos && Helpers.within(pos.x, 0, columns) && Helpers.within(pos.y, 0, rows);
+            return pos && Helpers.within(pos.x, 0, columns - 1) && Helpers.within(pos.y, 0, rows - 1);
         }
     };
 })();

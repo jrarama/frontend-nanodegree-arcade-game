@@ -1,41 +1,41 @@
-/* Engine.js
+/**
+ * Engine.js
  * This file provides the game loop functionality (update entities and render),
  * draws the initial game board on the screen, and then calls the update and
- * render methods on your player and enemy objects (defined in your app.js).
+ * render methods on your player and enemy objects (defined in the entities.js).
  *
  * A game engine works by drawing the entire game screen over and over, kind of
  * like a flipbook you may have created as a kid. When your player moves across
  * the screen, it may look like just that image/character is moving or being
  * drawn but that is not the case. What's really happening is the entire "scene"
  * is being drawn over and over, presenting the illusion of animation.
- *
- * This engine is available globally via the Engine variable and it also makes
- * the canvas' context (ctx) object globally available to make writing app.js
- * a little simpler to work with.
  */
 
-(function(global) {
-    /* Predefine the variables we'll be using within this scope,
+(function() {
+    /**
+     * Predefine the variables we'll be using within this scope,
      * create the canvas element, grab the 2D context for that canvas
      * set the canvas elements height/width and add it to the DOM.
      */
-    var doc = global.document,
-        win = global.window,
+    var doc = document,
+        win = window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        columns = 5,
+        nColumns = 5,
         rows = ['water', 'stone', 'stone', 'stone', 'grass', 'grass'],
         nRows = rows.length,
         player = null,
         allEnemies = [],
         blocks = [],
-        lastTime;
+        lastTime,
+        paused;
 
     canvas.width = 505;
     canvas.height = 606;
     doc.body.appendChild(canvas);
 
-    /* This function serves as the kickoff point for the game loop itself
+    /**
+     * This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
      */
     function main() {
@@ -51,7 +51,10 @@
         /* Call our update/render functions, pass along the time delta to
          * our update function since it may be used for smooth animation.
          */
-        update(dt);
+
+        if (!paused) {
+            update(dt);
+        }
         render();
 
         /* Set our lastTime variable which is used to determine the time delta
@@ -65,50 +68,54 @@
         win.requestAnimationFrame(main);
     }
 
-    /* This function does some initial setup that should only occur once,
+    /**
+     * This function does some initial setup that should only occur once,
      * particularly setting the lastTime variable that is required for the
      * game loop.
      */
     function init() {
         reset();
+
+        /* Initialize all entities */
         initEntities();
+
         lastTime = Date.now();
         main();
     }
 
-    /* This function is called by main (our game loop) and itself calls all
-     * of the functions which may need to update entity's data. Based on how
-     * you implement your collision detection (when two entities occupy the
-     * same space, for instance when your character should die), you may find
-     * the need to add an additional function call here. For now, we've left
-     * it commented out - you may or may not want to implement this
-     * functionality this way (you could just implement collision detection
-     * on the entities themselves within your app.js file).
+    /**
+     * This function is called by main (our game loop) and itself calls all
+     * of the functions which may need to update entity's data such as updating
+     * the position of the enemies. We can also implement our collision detection
+     * (when two entities occupy the same space, for instance when your character
+     * should die) here.
      */
     function update(dt) {
         updateEntities(dt);
         // checkCollisions();
     }
 
-    /* This is called by the update function  and loops through all of the
-     * objects within your allEnemies array as defined in app.js and calls
-     * their update() methods. It will then call the update function for your
+    /**
+     * This is called by the update function  and loops through all of the
+     * entities defined in entities.js and calls their update() methods.
+     * It will then call the update function for your
      * player object. These update methods should focus purely on updating
-     * the data/properties related to  the object. Do your drawing in your
+     * the data/properties related to  the object. Do the drawing in the
      * render methods.
      */
     function updateEntities(dt) {
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
 
-            if (enemy.x >= columns) {
+            if (enemy.x >= nColumns) {
                 enemy.reset();
             }
         });
         //player.update();
     }
 
-    /* This function initially draws the "game level", it will then call
+    /**
+     * This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
      * game tick (or loop of the game engine) because that's how games work -
      * they are flipbooks creating the illusion of animation but in reality
@@ -118,32 +125,39 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         blocks.forEach(function(block) {
-            block.render();
+            block.render(ctx);
         });
 
         renderEntities();
     }
 
-    /* This function is called by the render function and is called on each game
+    /**
+     * This function is called by the render function and is called on each game
      * tick. It's purpose is to then call the render functions you have defined
      * on your enemy and player entities
      */
     function renderEntities() {
-        player.render();
+        player.render(ctx);
 
         allEnemies.forEach(function(enemy) {
-            enemy.render();
+            enemy.render(ctx);
         });
     }
 
-    /* This function does nothing but it could have been a good place to
+    /**
+     * This function does nothing but it could have been a good place to
      * handle game reset states - maybe a new game menu or a game over screen
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+        paused = false;
     }
 
+    /**
+     * This function first gets all the images used for all entities then
+     * load asynchronously. When all images are now ready we can now
+     * initialize the game by calling the init function.
+     */
     function loadResources() {
         var images = [];
         images = images.concat(Player.getSprites());
@@ -154,6 +168,10 @@
         Resources.onReady(init);
     }
 
+    /**
+     * This function is called within the init function which is used
+     * to initialize all the entities
+     */
     function initEntities() {
         allEnemies = [];
         blocks =  [];
@@ -163,38 +181,44 @@
         initEnemies();
     }
 
+    /** Initialize the player's properties */
     function initPlayer() {
+        /* select a random character */
         var characters = Helpers.getObjKeys(Player.characters);
         var charInd = Math.floor(Math.random() * characters.length);
-        var xPos = Math.floor(Math.random() * columns);
-        player = new Player(ctx, characters[charInd], xPos, rows.length - 1);
+
+        /* select a ramdom x position */
+        var xPos = Math.floor(Math.random() * nColumns);
+
+        /* create the player */
+        player = new Player(characters[charInd], xPos, rows.length - 1);
     }
 
+    /**
+     * Initialize all the enemies. We create 3 enemies by default and set
+     * their position and speed randomly by calling its reset function.
+     */
     function initEnemies() {
-        var i, x, y, s;
+        var i;
         for (i = 0; i < 3; i++) {
-            var enemy = new Enemy(ctx);
+            var enemy = new Enemy();
             enemy.reset();
             allEnemies.push(enemy);
         }
     }
 
+    /** Initialize all the blocks */
     function initBlocks() {
         var row, col;
 
         for (row = 0; row < nRows; row++) {
-            for (col = 0; col < columns; col++) {
-                blocks.push(new Block(ctx, rows[row], col, row));
+            for (col = 0; col < nColumns; col++) {
+                blocks.push(new Block(rows[row], col, row));
             }
         }
     }
 
-    /* Assign the canvas' context object to the global variable (the window
-     * object when run in a browser) so that developer's can use it more easily
-     * from within their app.js files.
-     */
-    global.ctx = ctx;
-
+    /** Handle the keyboard keyup events */
     doc.addEventListener('keyup', function(e) {
         var allowedKeys = {
             37: 'left',
@@ -203,11 +227,27 @@
             40: 'down'
         };
 
-        if (player) {
-            player.move(allowedKeys[e.keyCode], nRows, columns);
+        var move = allowedKeys[e.keyCode];
+
+        /*
+         * Move only when player is already loaded, a valid key is pressed,
+         * and the game is not paused.
+         */
+        if (player && move && !paused) {
+            player.move(move, nRows, nColumns);
+        }
+
+        switch (e.keyCode) {
+            case 27: // Escape key
+                paused = !paused; // Toggle pause
+                break;
         }
     });
 
+    /**
+     * Expose the engine to the outside world with only some few functions
+     * made public.
+     */
     window.Engine = {
         init: loadResources
     };
