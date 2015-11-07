@@ -266,6 +266,7 @@
          */
         this.checkBounds = true;
 
+        this.opacity = 1;
         this.offsetX = offsetX || 0;
         this.offsetY = offsetY || 0;
         this.bounds = bounds;
@@ -289,7 +290,9 @@
         render: function() {
             var img = this.getImage();
             var ctx = Resources.getContext();
+            ctx.globalAlpha = this.opacity;
             ctx.drawImage(img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
+            ctx.globalAlpha = 1.0;
 
             if (Helpers.getDrawBounds() && this.checkBounds) {
                 this.drawBounds(ctx);
@@ -364,6 +367,9 @@
 
         // Sets the speed of the player.
         this.speed = 1.5;
+
+        // Set dead properties
+        this.setDead(false);
     };
 
     /** Inherit properties and functions from Entity class */
@@ -436,18 +442,35 @@
      */
     Player.prototype.update = function(dt) {
         var movement = this.movement;
-        if (!movement) {
-            return;
-        }
-        var distance = this.speed * dt;
-        var newX = this.x + (movement.x * distance);
-        var newY = this.y + (movement.y * distance);
+        if (!this.dead && movement) {
+            var distance = this.speed * dt;
+            var newX = this.x + (movement.x * distance);
+            var newY = this.y + (movement.y * distance);
 
-		var grid = Resources.getGrid();
-        /* Check if the new positions are within the grid before setting it */
-        if (Helpers.withinGrid({ x: newX, y: newY }, grid.nRows, grid.nColumns)) {
-            this.x = newX;
-            this.y = newY;
+            var grid = Resources.getGrid();
+            /* Check if the new positions are within the grid before setting it */
+            if (Helpers.withinGrid({ x: newX, y: newY }, grid.nRows, grid.nColumns)) {
+                this.x = newX;
+                this.y = newY;
+            }
+        }
+
+        if (this.dead) {
+            this.deathAnimation();
+        }
+    };
+
+    /**
+     * Animate the opacity of the player when it hits the enemy before resetting
+     * its position
+     */
+    Player.prototype.deathAnimation = function(dt) {
+        this.deadTime += dt * 5;
+        if (this.deadTime > 8) {
+            // make the player alive and reset its position
+            this.setDead(false, true);
+        } else {
+            this.opacity = Math.abs(Math.sin(this.deadTime));
         }
     };
 
@@ -456,12 +479,30 @@
      * position and random x position.
      */
     Player.prototype.reset = function() {
-    	var grid = Resources.getGrid();
+        var grid = Resources.getGrid();
         /* select a ramdom x position */
         var xPos = Math.floor(Math.random() * grid.nColumns);
         this.x = xPos;
         /* Set the Y position to a random Grass row */
         this.y = Helpers.randomIndex(grid.rows, 'G');
+    };
+
+    /**
+     * Flag the player as dead and reset the deadTime to zero
+     * which is used for animation.
+     * @param {{boolean}} bool
+     *        Whether the player is dead or not
+     * @param {{boolean}} reset
+     *        Whether the players position should be reset or not
+     */
+    Player.prototype.setDead = function(bool, reset) {
+        this.dead = bool;
+        this.deadTime = 0;
+        this.opacity = 1;
+
+        if (reset) {
+            this.reset();
+        }
     };
 
     /**
@@ -633,13 +674,16 @@
     }
 
     function checkCollisions() {
+        if (player.dead) {
+            return;
+        }
         // check collision with enemies
         var rect1 = player.getBounds();
 
         allEnemies.forEach(function(enemy) {
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
-                player.reset();
+                player.setDead(true);
             }
         });
     }
@@ -667,11 +711,11 @@
      * on your enemy and player entities
      */
     function renderEntities() {
-        player.render();
-
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
+
+        player.render();
     }
 
     /**

@@ -130,13 +130,16 @@
     }
 
     function checkCollisions() {
+        if (player.dead) {
+            return;
+        }
         // check collision with enemies
         var rect1 = player.getBounds();
 
         allEnemies.forEach(function(enemy) {
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
-                player.reset();
+                player.setDead(true);
             }
         });
     }
@@ -164,11 +167,11 @@
      * on your enemy and player entities
      */
     function renderEntities() {
-        player.render();
-
         allEnemies.forEach(function(enemy) {
             enemy.render();
         });
+
+        player.render();
     }
 
     /**
