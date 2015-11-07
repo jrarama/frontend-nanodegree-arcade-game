@@ -21,15 +21,13 @@
         win = window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        nColumns = 5,
-        rows = ['water', 'stone', 'stone', 'stone', 'grass', 'grass'],
-        nRows = rows.length,
         player = null,
         allEnemies = [],
         blocks = [],
         lastTime,
         paused;
 
+    Resources.setContext(ctx);
     canvas.width = 505;
     canvas.height = 606;
     doc.body.appendChild(canvas);
@@ -120,6 +118,7 @@
      * render methods.
      */
     function updateEntities(dt) {
+        var nColumns = Resources.getGrid().nColumns;
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
 
@@ -127,7 +126,7 @@
                 enemy.reset();
             }
         });
-        player.update(dt, nRows, nColumns);
+        player.update(dt);
     }
 
     function checkCollisions() {
@@ -137,7 +136,7 @@
         allEnemies.forEach(function(enemy) {
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
-                player.reset(nRows, nColumns);
+                player.reset();
             }
         });
     }
@@ -153,7 +152,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         blocks.forEach(function(block) {
-            block.render(ctx);
+            block.render();
         });
 
         renderEntities();
@@ -165,10 +164,10 @@
      * on your enemy and player entities
      */
     function renderEntities() {
-        player.render(ctx);
+        player.render();
 
         allEnemies.forEach(function(enemy) {
-            enemy.render(ctx);
+            enemy.render();
         });
     }
 
@@ -223,7 +222,7 @@
 
         /* create the player */
         player = new Player(characters[charInd]);
-        player.reset(nRows, nColumns);
+        player.reset();
     }
 
     /**
@@ -241,11 +240,12 @@
 
     /** Initialize all the blocks */
     function initBlocks() {
+        var grid = Resources.getGrid(), nRows = grid.nRows, nColumns = grid.nColumns;
         var row, col;
 
         for (row = 0; row < nRows; row++) {
             for (col = 0; col < nColumns; col++) {
-                blocks.push(new Block(rows[row], col, row));
+                blocks.push(new Block(grid.rows[row], col, row));
             }
         }
     }
@@ -285,7 +285,7 @@
                     moves.push(key);
                 }
             }
-            player.move(moves, nRows, nColumns);
+            player.move(moves);
         }
     }
 
@@ -294,7 +294,14 @@
      * made public.
      */
     window.Engine = {
-        init: loadResources
+        init: function(opts) {
+            // Initilize grid options if present
+            var o = opts || {};
+            if (o.grid) {
+                Resources.setGrid(o.grid.rows, o.grid.nColumns);
+            }
+            loadResources();
+        }
     };
 
 })();

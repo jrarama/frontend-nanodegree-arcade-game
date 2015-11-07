@@ -61,6 +61,25 @@
         rectCollision: function(rect1, rect2) {
             return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x &&
                 rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y;
+        },
+
+        /**
+         * return a random index of a block type from a list of blocks
+         * @param {{string}} blocks
+         *      A string that contains G, S, or W only. E.g. "WSSSGG" means
+         *      the first row is water, the 2nd to 4th row is stone and the
+         *      last two rows will be grass.
+         */
+        randomIndex: function(blocks, blockType) {
+            var i, b = (blocks || '').replace(/[^SWG]/g, '');
+            var ind = [];
+            for(i = 0; i < b.length; i++) {
+                if (b[i] == blockType) {
+                    ind.push(i);
+                }
+            }
+            var rnd = Math.floor(Math.random() * ind.length);
+            return ind[rnd];
         }
     };
 

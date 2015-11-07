@@ -8,6 +8,8 @@
     var resourceCache = {};
     var loading = [];
     var readyCallbacks = [];
+    var context = null;
+    var grid = { rows: "WSSSGG", nRows: 6, nColumns: 5 };
 
     /* This is the publicly accessible image loading function. It accepts
      * an array of strings pointing to image files or a string for a single
@@ -106,6 +108,30 @@
         load: load,
         get: get,
         onReady: onReady,
-        isReady: isReady
+        isReady: isReady,
+
+        /** Sets the canvas context */
+        setContext: function(ctx) {
+            context = ctx;
+        },
+
+        /** Gets the canvas context */
+        getContext: function() {
+            return context;
+        },
+
+        /** Sets the grid options */
+        setGrid: function(rows, nColumns) {
+            if (rows) {
+                grid.rows = rows;
+                grid.nRows = rows.length;
+            }
+            grid.nColumns = nColumns || grid.nColumns;
+        },
+
+        /** Gets the grid options */
+        getGrid: function() {
+            return grid;
+        }
     };
 })();

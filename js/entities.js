@@ -59,18 +59,20 @@
             return this.img;
         },
         /**
-         * Render the block using the context
-         * @param {{object}} ctx
-         *      The canvas context
+         * Render the entity
          */
-        render: function(ctx) {
+        render: function() {
             var img = this.getImage();
+            var ctx = Resources.getContext();
             ctx.drawImage(img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
 
             if (Helpers.getDrawBounds() && this.checkBounds) {
                 this.drawBounds(ctx);
             }
         },
+        /**
+         * Get the actual rectangle coordinate of the entity's bounds
+         */
         getBounds: function() {
             var b = this.bounds || {};
             return {
@@ -80,6 +82,9 @@
                 height: b.height || blockHeight
             };
         },
+        /**
+         * Draw the rectangle bounds of the entity
+         */
         drawBounds: function(ctx) {
             var b = this.getBounds();
             if (!b) {
@@ -110,9 +115,9 @@
 
     /** The block types with their image paths as its value */
     Block.types = {
-        'grass': 'images/grass-block.png',
-        'stone': 'images/stone-block.png',
-        'water': 'images/water-block.png'
+        'G': 'images/grass-block.png',
+        'S': 'images/stone-block.png',
+        'W': 'images/water-block.png'
     };
 
     /** Get all the images used for Block */
@@ -125,15 +130,15 @@
      * @constructor
      */
     var Player = function(character, x, y) {
-        this.character = character;
-
-        // Sets the speed of the player.
-        this.speed = 1.5;
-
         // Set the boundary of the entity inside its image
         var bounds = { x: 16, y: blockHeight - 30, width: blockWidth - 31, height: blockHeight - 6 };
         // Use the constructor of its parent class Entity
         Entity.call(this, Player.characters[character], x, y, 0, -10, bounds);
+
+        this.character = character;
+
+        // Sets the speed of the player.
+        this.speed = 1.5;
     };
 
     /** Inherit properties and functions from Entity class */
@@ -203,12 +208,8 @@
      *
      * @param {{number}} dt
      *        The delta time or the elapsed time since last update
-     * @param {{int}} rows
-     *        The number of rows in the grid
-     * @param {{int}} columns
-     *        The number of columns in the grid
      */
-    Player.prototype.update = function(dt, rows, columns) {
+    Player.prototype.update = function(dt) {
         var movement = this.movement;
         if (!movement) {
             return;
@@ -217,8 +218,9 @@
         var newX = this.x + (movement.x * distance);
         var newY = this.y + (movement.y * distance);
 
+		var grid = Resources.getGrid();
         /* Check if the new positions are within the grid before setting it */
-        if (Helpers.withinGrid({ x: newX, y: newY }, rows, columns)) {
+        if (Helpers.withinGrid({ x: newX, y: newY }, grid.nRows, grid.nColumns)) {
             this.x = newX;
             this.y = newY;
         }
@@ -227,16 +229,14 @@
     /**
      * This function resets the position of the player in its initial y
      * position and random x position.
-     * @param {{int}} rows
-     *        The number of rows in the grid
-     * @param {{int}} columns
-     *        The number of columns in the grid
      */
-    Player.prototype.reset = function(rows, columns) {
+    Player.prototype.reset = function() {
+    	var grid = Resources.getGrid();
         /* select a ramdom x position */
-        var xPos = Math.floor(Math.random() * columns);
+        var xPos = Math.floor(Math.random() * grid.nColumns);
         this.x = xPos;
-        this.y = rows - 1;
+        /* Set the Y position to a random Grass row */
+        this.y = Helpers.randomIndex(grid.rows, 'G');
     };
 
     /**
@@ -275,8 +275,8 @@
         /* position the enemy to the leftmost side of screen minus 1 block */
         this.x = -1;
 
-        /* randomize the y position */
-        this.y = Math.floor(Math.random() * 3 + 1);
+        /* Set the Y position to a random Stone row */
+        this.y = Helpers.randomIndex(Resources.getGrid().rows, 'S');
 
         /* Set the speed.
          * Minimum is 1 block per second and max is 3 blocks per second.

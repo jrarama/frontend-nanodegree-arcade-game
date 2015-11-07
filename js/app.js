@@ -1,4 +1,8 @@
 /* Initialize the game */
 
 Helpers.setDrawBounds(false);
-Engine.init();
+Engine.init({
+    grid: {
+        rows: 'WSGSGS'
+    }
+});

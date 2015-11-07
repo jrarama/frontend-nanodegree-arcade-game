@@ -61,6 +61,25 @@
         rectCollision: function(rect1, rect2) {
             return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x &&
                 rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y;
+        },
+
+        /**
+         * return a random index of a block type from a list of blocks
+         * @param {{string}} blocks
+         *      A string that contains G, S, or W only. E.g. "WSSSGG" means
+         *      the first row is water, the 2nd to 4th row is stone and the
+         *      last two rows will be grass.
+         */
+        randomIndex: function(blocks, blockType) {
+            var i, b = (blocks || '').replace(/[^SWG]/g, '');
+            var ind = [];
+            for(i = 0; i < b.length; i++) {
+                if (b[i] == blockType) {
+                    ind.push(i);
+                }
+            }
+            var rnd = Math.floor(Math.random() * ind.length);
+            return ind[rnd];
         }
     };
 
@@ -84,6 +103,8 @@
     var resourceCache = {};
     var loading = [];
     var readyCallbacks = [];
+    var context = null;
+    var grid = { rows: "WSSSGG", nRows: 6, nColumns: 5 };
 
     /* This is the publicly accessible image loading function. It accepts
      * an array of strings pointing to image files or a string for a single
@@ -182,7 +203,31 @@
         load: load,
         get: get,
         onReady: onReady,
-        isReady: isReady
+        isReady: isReady,
+
+        /** Sets the canvas context */
+        setContext: function(ctx) {
+            context = ctx;
+        },
+
+        /** Gets the canvas context */
+        getContext: function() {
+            return context;
+        },
+
+        /** Sets the grid options */
+        setGrid: function(rows, nColumns) {
+            if (rows) {
+                grid.rows = rows;
+                grid.nRows = rows.length;
+            }
+            grid.nColumns = nColumns || grid.nColumns;
+        },
+
+        /** Gets the grid options */
+        getGrid: function() {
+            return grid;
+        }
     };
 })();
 
@@ -239,18 +284,20 @@
             return this.img;
         },
         /**
-         * Render the block using the context
-         * @param {{object}} ctx
-         *      The canvas context
+         * Render the entity
          */
-        render: function(ctx) {
+        render: function() {
             var img = this.getImage();
+            var ctx = Resources.getContext();
             ctx.drawImage(img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
 
             if (Helpers.getDrawBounds() && this.checkBounds) {
                 this.drawBounds(ctx);
             }
         },
+        /**
+         * Get the actual rectangle coordinate of the entity's bounds
+         */
         getBounds: function() {
             var b = this.bounds || {};
             return {
@@ -260,6 +307,9 @@
                 height: b.height || blockHeight
             };
         },
+        /**
+         * Draw the rectangle bounds of the entity
+         */
         drawBounds: function(ctx) {
             var b = this.getBounds();
             if (!b) {
@@ -290,9 +340,9 @@
 
     /** The block types with their image paths as its value */
     Block.types = {
-        'grass': 'images/grass-block.png',
-        'stone': 'images/stone-block.png',
-        'water': 'images/water-block.png'
+        'G': 'images/grass-block.png',
+        'S': 'images/stone-block.png',
+        'W': 'images/water-block.png'
     };
 
     /** Get all the images used for Block */
@@ -305,15 +355,15 @@
      * @constructor
      */
     var Player = function(character, x, y) {
-        this.character = character;
-
-        // Sets the speed of the player.
-        this.speed = 1.5;
-
         // Set the boundary of the entity inside its image
         var bounds = { x: 16, y: blockHeight - 30, width: blockWidth - 31, height: blockHeight - 6 };
         // Use the constructor of its parent class Entity
         Entity.call(this, Player.characters[character], x, y, 0, -10, bounds);
+
+        this.character = character;
+
+        // Sets the speed of the player.
+        this.speed = 1.5;
     };
 
     /** Inherit properties and functions from Entity class */
@@ -383,12 +433,8 @@
      *
      * @param {{number}} dt
      *        The delta time or the elapsed time since last update
-     * @param {{int}} rows
-     *        The number of rows in the grid
-     * @param {{int}} columns
-     *        The number of columns in the grid
      */
-    Player.prototype.update = function(dt, rows, columns) {
+    Player.prototype.update = function(dt) {
         var movement = this.movement;
         if (!movement) {
             return;
@@ -397,8 +443,9 @@
         var newX = this.x + (movement.x * distance);
         var newY = this.y + (movement.y * distance);
 
+		var grid = Resources.getGrid();
         /* Check if the new positions are within the grid before setting it */
-        if (Helpers.withinGrid({ x: newX, y: newY }, rows, columns)) {
+        if (Helpers.withinGrid({ x: newX, y: newY }, grid.nRows, grid.nColumns)) {
             this.x = newX;
             this.y = newY;
         }
@@ -407,16 +454,14 @@
     /**
      * This function resets the position of the player in its initial y
      * position and random x position.
-     * @param {{int}} rows
-     *        The number of rows in the grid
-     * @param {{int}} columns
-     *        The number of columns in the grid
      */
-    Player.prototype.reset = function(rows, columns) {
+    Player.prototype.reset = function() {
+    	var grid = Resources.getGrid();
         /* select a ramdom x position */
-        var xPos = Math.floor(Math.random() * columns);
+        var xPos = Math.floor(Math.random() * grid.nColumns);
         this.x = xPos;
-        this.y = rows - 1;
+        /* Set the Y position to a random Grass row */
+        this.y = Helpers.randomIndex(grid.rows, 'G');
     };
 
     /**
@@ -455,8 +500,8 @@
         /* position the enemy to the leftmost side of screen minus 1 block */
         this.x = -1;
 
-        /* randomize the y position */
-        this.y = Math.floor(Math.random() * 3 + 1);
+        /* Set the Y position to a random Stone row */
+        this.y = Helpers.randomIndex(Resources.getGrid().rows, 'S');
 
         /* Set the speed.
          * Minimum is 1 block per second and max is 3 blocks per second.
@@ -479,15 +524,13 @@
         win = window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        nColumns = 5,
-        rows = ['water', 'stone', 'stone', 'stone', 'grass', 'grass'],
-        nRows = rows.length,
         player = null,
         allEnemies = [],
         blocks = [],
         lastTime,
         paused;
 
+    Resources.setContext(ctx);
     canvas.width = 505;
     canvas.height = 606;
     doc.body.appendChild(canvas);
@@ -578,6 +621,7 @@
      * render methods.
      */
     function updateEntities(dt) {
+        var nColumns = Resources.getGrid().nColumns;
         allEnemies.forEach(function(enemy) {
             enemy.update(dt);
 
@@ -585,7 +629,7 @@
                 enemy.reset();
             }
         });
-        player.update(dt, nRows, nColumns);
+        player.update(dt);
     }
 
     function checkCollisions() {
@@ -595,7 +639,7 @@
         allEnemies.forEach(function(enemy) {
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
-                player.reset(nRows, nColumns);
+                player.reset();
             }
         });
     }
@@ -611,7 +655,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         blocks.forEach(function(block) {
-            block.render(ctx);
+            block.render();
         });
 
         renderEntities();
@@ -623,10 +667,10 @@
      * on your enemy and player entities
      */
     function renderEntities() {
-        player.render(ctx);
+        player.render();
 
         allEnemies.forEach(function(enemy) {
-            enemy.render(ctx);
+            enemy.render();
         });
     }
 
@@ -681,7 +725,7 @@
 
         /* create the player */
         player = new Player(characters[charInd]);
-        player.reset(nRows, nColumns);
+        player.reset();
     }
 
     /**
@@ -699,11 +743,12 @@
 
     /** Initialize all the blocks */
     function initBlocks() {
+        var grid = Resources.getGrid(), nRows = grid.nRows, nColumns = grid.nColumns;
         var row, col;
 
         for (row = 0; row < nRows; row++) {
             for (col = 0; col < nColumns; col++) {
-                blocks.push(new Block(rows[row], col, row));
+                blocks.push(new Block(grid.rows[row], col, row));
             }
         }
     }
@@ -743,7 +788,7 @@
                     moves.push(key);
                 }
             }
-            player.move(moves, nRows, nColumns);
+            player.move(moves);
         }
     }
 
@@ -752,9 +797,20 @@
      * made public.
      */
     window.Engine = {
-        init: loadResources
+        init: function(opts) {
+            // Initilize grid options if present
+            var o = opts || {};
+            if (o.grid) {
+                Resources.setGrid(o.grid.rows, o.grid.nColumns);
+            }
+            loadResources();
+        }
     };
 
 })();
 Helpers.setDrawBounds(false);
-Engine.init();
+Engine.init({
+    grid: {
+        rows: 'WSGSGS'
+    }
+});
