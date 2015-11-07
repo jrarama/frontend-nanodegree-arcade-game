@@ -35,7 +35,12 @@
         this.x = x;
         this.y = y;
 
+        /**
+         * A flag that tells us weather we want to render the bounds when
+         * Helpers.drawBounds variable is set to true
+         */
         this.checkBounds = true;
+
         this.offsetX = offsetX || 0;
         this.offsetY = offsetY || 0;
         this.bounds = bounds;
@@ -93,6 +98,10 @@
         // Use the constructor of its parent class Entity
         Entity.call(this, Block.types[type], x, y);
         this.type = type;
+
+        /* We don't want to display rectangle bounds for blocks
+         * since we will not check for collision with it.
+         */
         this.checkBounds = false;
     };
 
@@ -118,6 +127,9 @@
     var Player = function(character, x, y) {
         this.character = character;
 
+        // Sets the speed of the player.
+        this.speed = 1.5;
+
         // Set the boundary of the entity inside its image
         var bounds = { x: 16, y: blockHeight - 30, width: blockWidth - 31, height: blockHeight - 6 };
         // Use the constructor of its parent class Entity
@@ -141,37 +153,90 @@
 
     /** The list of valid moves with x and y changes it will make */
     Player.validMoves = {
-        left: [-1, 0],
-        right: [1, 0],
-        up: [0, -1],
-        down: [0, 1]
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 },
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 }
     };
 
     /**
-     * Move the player in the grid
-     * @param {{string}} move
-     *         A valid move defined in Player.validMoves
+     * Set the this.movement variable that is used by the update method
+     * to move the player. Note that we are not yet updating the x and y
+     * location of the player here. The update function will be the one
+     * who will update the player's position based on some conditions.
+     *
+     * @param {{array}} moves
+     *         An array of valid moves as defined in Player.validMoves
+     */
+    Player.prototype.move = function(moves) {
+        if (!moves || moves.length === 0) {
+            this.movement = false;
+            return;
+        }
+
+        /* This code allows us to move the player in two directions at
+         * the same time (diagonally). E.g. when we press both up and left,
+         * the player will move in the north east direction.
+         */
+        this.movement = { x: 0, y: 0};
+        for (var move in moves) {
+            var item = Player.validMoves[moves[move]];
+
+            if (item) {
+                this.movement.x += item.x;
+                this.movement.y += item.y;
+            }
+        }
+    };
+
+    /** This function is used to stop the player from moving */
+    Player.prototype.stop = function() {
+        this.movement = false;
+    };
+
+    /**
+     * Update the player's location in the grid.
+     *
+     * It uses the movement variable which is set in the move function to
+     * update the player's location on the grid. It first check if the new
+     * location is within the grid before updating the location.
+     *
+     * @param {{number}} dt
+     *        The delta time or the elapsed time since last update
      * @param {{int}} rows
      *        The number of rows in the grid
      * @param {{int}} columns
      *        The number of columns in the grid
      */
-    Player.prototype.move = function(move, rows, columns) {
-        var movement = Player.validMoves[move];
-
-        /* Check if move is valid and has x and y values */
-        if (!movement || movement.length != 2) {
+    Player.prototype.update = function(dt, rows, columns) {
+        var movement = this.movement;
+        if (!movement) {
             return;
         }
-
-        var newX = this.x + movement[0];
-        var newY = this.y + movement[1];
+        var distance = this.speed * dt;
+        var newX = this.x + (movement.x * distance);
+        var newY = this.y + (movement.y * distance);
 
         /* Check if the new positions are within the grid before setting it */
         if (Helpers.withinGrid({ x: newX, y: newY }, rows, columns)) {
             this.x = newX;
             this.y = newY;
         }
+    };
+
+    /**
+     * This function resets the position of the player in its initial y
+     * position and random x position.
+     * @param {{int}} rows
+     *        The number of rows in the grid
+     * @param {{int}} columns
+     *        The number of columns in the grid
+     */
+    Player.prototype.reset = function(rows, columns) {
+        /* select a ramdom x position */
+        var xPos = Math.floor(Math.random() * columns);
+        this.x = xPos;
+        this.y = rows - 1;
     };
 
     /**

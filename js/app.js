@@ -1,4 +1,4 @@
 /* Initialize the game */
 
-Helpers.setDrawBounds(true);
+Helpers.setDrawBounds(false);
 Engine.init();

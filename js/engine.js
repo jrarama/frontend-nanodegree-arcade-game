@@ -34,6 +34,22 @@
     canvas.height = 606;
     doc.body.appendChild(canvas);
 
+    /** This variable is the definition of valid move keys */
+    var movementKeys = {
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down'
+    };
+
+    /** This is the map of current pressed movement keys */
+    var pressedKeys = {
+        left: false,
+        right: false,
+        up: false,
+        down: false
+    };
+
     /**
      * This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -86,13 +102,13 @@
     /**
      * This function is called by main (our game loop) and itself calls all
      * of the functions which may need to update entity's data such as updating
-     * the position of the enemies. We can also implement our collision detection
+     * the position of the enemies. We also implemented our collision detection
      * (when two entities occupy the same space, for instance when your character
      * should die) here.
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
     }
 
     /**
@@ -111,7 +127,19 @@
                 enemy.reset();
             }
         });
-        //player.update();
+        player.update(dt, nRows, nColumns);
+    }
+
+    function checkCollisions() {
+        // check collision with enemies
+        var rect1 = player.getBounds();
+
+        allEnemies.forEach(function(enemy) {
+            var rect2 = enemy.getBounds();
+            if (Helpers.rectCollision(rect1, rect2)) {
+                player.reset(nRows, nColumns);
+            }
+        });
     }
 
     /**
@@ -151,6 +179,12 @@
      */
     function reset() {
         paused = false;
+        pressedKeys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
     }
 
     /**
@@ -187,11 +221,9 @@
         var characters = Helpers.getObjKeys(Player.characters);
         var charInd = Math.floor(Math.random() * characters.length);
 
-        /* select a ramdom x position */
-        var xPos = Math.floor(Math.random() * nColumns);
-
         /* create the player */
-        player = new Player(characters[charInd], xPos, rows.length - 1);
+        player = new Player(characters[charInd]);
+        player.reset(nRows, nColumns);
     }
 
     /**
@@ -218,23 +250,12 @@
         }
     }
 
-    /** Handle the keyboard keyup events */
+    /** Handle the keyboard keyup events. */
     doc.addEventListener('keyup', function(e) {
-        var allowedKeys = {
-            37: 'left',
-            38: 'up',
-            39: 'right',
-            40: 'down'
-        };
-
-        var move = allowedKeys[e.keyCode];
-
-        /*
-         * Move only when player is already loaded, a valid key is pressed,
-         * and the game is not paused.
-         */
-        if (player && move && !paused) {
-            player.move(move, nRows, nColumns);
+        var move = movementKeys[e.keyCode];
+        if (move) {
+            pressedKeys[move] = false;
+            movePlayer();
         }
 
         switch (e.keyCode) {
@@ -243,6 +264,30 @@
                 break;
         }
     });
+
+    /** Handle the keyboard keydown events */
+    doc.addEventListener('keydown', function(e) {
+        var move = movementKeys[e.keyCode];
+        if (move) {
+            pressedKeys[move] = true;
+            movePlayer();
+        }
+    });
+
+    /**
+     * Move only when player is already loaded and the game is not paused.
+     */
+    function movePlayer() {
+        if (player && !paused) {
+            var moves = [];
+            for(var key in pressedKeys) {
+                if (pressedKeys.hasOwnProperty(key) && pressedKeys[key]) {
+                    moves.push(key);
+                }
+            }
+            player.move(moves, nRows, nColumns);
+        }
+    }
 
     /**
      * Expose the engine to the outside world with only some few functions

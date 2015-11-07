@@ -53,6 +53,14 @@
         },
         getDrawBounds: function() {
             return drawBounds;
+        },
+        /**
+         * This function checks for collision between two rectangles
+         * Each rectangle should have x, y, width and height properties
+         */
+        rectCollision: function(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y;
         }
     };
 
@@ -207,7 +215,12 @@
         this.x = x;
         this.y = y;
 
+        /**
+         * A flag that tells us weather we want to render the bounds when
+         * Helpers.drawBounds variable is set to true
+         */
         this.checkBounds = true;
+
         this.offsetX = offsetX || 0;
         this.offsetY = offsetY || 0;
         this.bounds = bounds;
@@ -265,6 +278,10 @@
         // Use the constructor of its parent class Entity
         Entity.call(this, Block.types[type], x, y);
         this.type = type;
+
+        /* We don't want to display rectangle bounds for blocks
+         * since we will not check for collision with it.
+         */
         this.checkBounds = false;
     };
 
@@ -290,6 +307,9 @@
     var Player = function(character, x, y) {
         this.character = character;
 
+        // Sets the speed of the player.
+        this.speed = 1.5;
+
         // Set the boundary of the entity inside its image
         var bounds = { x: 16, y: blockHeight - 30, width: blockWidth - 31, height: blockHeight - 6 };
         // Use the constructor of its parent class Entity
@@ -313,37 +333,90 @@
 
     /** The list of valid moves with x and y changes it will make */
     Player.validMoves = {
-        left: [-1, 0],
-        right: [1, 0],
-        up: [0, -1],
-        down: [0, 1]
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 },
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 }
     };
 
     /**
-     * Move the player in the grid
-     * @param {{string}} move
-     *         A valid move defined in Player.validMoves
+     * Set the this.movement variable that is used by the update method
+     * to move the player. Note that we are not yet updating the x and y
+     * location of the player here. The update function will be the one
+     * who will update the player's position based on some conditions.
+     *
+     * @param {{array}} moves
+     *         An array of valid moves as defined in Player.validMoves
+     */
+    Player.prototype.move = function(moves) {
+        if (!moves || moves.length === 0) {
+            this.movement = false;
+            return;
+        }
+
+        /* This code allows us to move the player in two directions at
+         * the same time (diagonally). E.g. when we press both up and left,
+         * the player will move in the north east direction.
+         */
+        this.movement = { x: 0, y: 0};
+        for (var move in moves) {
+            var item = Player.validMoves[moves[move]];
+
+            if (item) {
+                this.movement.x += item.x;
+                this.movement.y += item.y;
+            }
+        }
+    };
+
+    /** This function is used to stop the player from moving */
+    Player.prototype.stop = function() {
+        this.movement = false;
+    };
+
+    /**
+     * Update the player's location in the grid.
+     *
+     * It uses the movement variable which is set in the move function to
+     * update the player's location on the grid. It first check if the new
+     * location is within the grid before updating the location.
+     *
+     * @param {{number}} dt
+     *        The delta time or the elapsed time since last update
      * @param {{int}} rows
      *        The number of rows in the grid
      * @param {{int}} columns
      *        The number of columns in the grid
      */
-    Player.prototype.move = function(move, rows, columns) {
-        var movement = Player.validMoves[move];
-
-        /* Check if move is valid and has x and y values */
-        if (!movement || movement.length != 2) {
+    Player.prototype.update = function(dt, rows, columns) {
+        var movement = this.movement;
+        if (!movement) {
             return;
         }
-
-        var newX = this.x + movement[0];
-        var newY = this.y + movement[1];
+        var distance = this.speed * dt;
+        var newX = this.x + (movement.x * distance);
+        var newY = this.y + (movement.y * distance);
 
         /* Check if the new positions are within the grid before setting it */
         if (Helpers.withinGrid({ x: newX, y: newY }, rows, columns)) {
             this.x = newX;
             this.y = newY;
         }
+    };
+
+    /**
+     * This function resets the position of the player in its initial y
+     * position and random x position.
+     * @param {{int}} rows
+     *        The number of rows in the grid
+     * @param {{int}} columns
+     *        The number of columns in the grid
+     */
+    Player.prototype.reset = function(rows, columns) {
+        /* select a ramdom x position */
+        var xPos = Math.floor(Math.random() * columns);
+        this.x = xPos;
+        this.y = rows - 1;
     };
 
     /**
@@ -419,6 +492,22 @@
     canvas.height = 606;
     doc.body.appendChild(canvas);
 
+    /** This variable is the definition of valid move keys */
+    var movementKeys = {
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down'
+    };
+
+    /** This is the map of current pressed movement keys */
+    var pressedKeys = {
+        left: false,
+        right: false,
+        up: false,
+        down: false
+    };
+
     /**
      * This function serves as the kickoff point for the game loop itself
      * and handles properly calling the update and render methods.
@@ -471,13 +560,13 @@
     /**
      * This function is called by main (our game loop) and itself calls all
      * of the functions which may need to update entity's data such as updating
-     * the position of the enemies. We can also implement our collision detection
+     * the position of the enemies. We also implemented our collision detection
      * (when two entities occupy the same space, for instance when your character
      * should die) here.
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
     }
 
     /**
@@ -496,7 +585,19 @@
                 enemy.reset();
             }
         });
-        //player.update();
+        player.update(dt, nRows, nColumns);
+    }
+
+    function checkCollisions() {
+        // check collision with enemies
+        var rect1 = player.getBounds();
+
+        allEnemies.forEach(function(enemy) {
+            var rect2 = enemy.getBounds();
+            if (Helpers.rectCollision(rect1, rect2)) {
+                player.reset(nRows, nColumns);
+            }
+        });
     }
 
     /**
@@ -536,6 +637,12 @@
      */
     function reset() {
         paused = false;
+        pressedKeys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
     }
 
     /**
@@ -572,11 +679,9 @@
         var characters = Helpers.getObjKeys(Player.characters);
         var charInd = Math.floor(Math.random() * characters.length);
 
-        /* select a ramdom x position */
-        var xPos = Math.floor(Math.random() * nColumns);
-
         /* create the player */
-        player = new Player(characters[charInd], xPos, rows.length - 1);
+        player = new Player(characters[charInd]);
+        player.reset(nRows, nColumns);
     }
 
     /**
@@ -603,23 +708,12 @@
         }
     }
 
-    /** Handle the keyboard keyup events */
+    /** Handle the keyboard keyup events. */
     doc.addEventListener('keyup', function(e) {
-        var allowedKeys = {
-            37: 'left',
-            38: 'up',
-            39: 'right',
-            40: 'down'
-        };
-
-        var move = allowedKeys[e.keyCode];
-
-        /*
-         * Move only when player is already loaded, a valid key is pressed,
-         * and the game is not paused.
-         */
-        if (player && move && !paused) {
-            player.move(move, nRows, nColumns);
+        var move = movementKeys[e.keyCode];
+        if (move) {
+            pressedKeys[move] = false;
+            movePlayer();
         }
 
         switch (e.keyCode) {
@@ -628,6 +722,30 @@
                 break;
         }
     });
+
+    /** Handle the keyboard keydown events */
+    doc.addEventListener('keydown', function(e) {
+        var move = movementKeys[e.keyCode];
+        if (move) {
+            pressedKeys[move] = true;
+            movePlayer();
+        }
+    });
+
+    /**
+     * Move only when player is already loaded and the game is not paused.
+     */
+    function movePlayer() {
+        if (player && !paused) {
+            var moves = [];
+            for(var key in pressedKeys) {
+                if (pressedKeys.hasOwnProperty(key) && pressedKeys[key]) {
+                    moves.push(key);
+                }
+            }
+            player.move(moves, nRows, nColumns);
+        }
+    }
 
     /**
      * Expose the engine to the outside world with only some few functions
@@ -638,5 +756,5 @@
     };
 
 })();
-Helpers.setDrawBounds(true);
+Helpers.setDrawBounds(false);
 Engine.init();
