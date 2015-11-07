@@ -9,59 +9,91 @@
 (function() {
 
     var blockHeight = 83;
+    var blockWidth = 101;
 
     /**
      * Create an Entity by specifying its sprite and its position
      * @constructor
      * @param {{string}} sprite
-     *		The path of entity's image
+     *        The path of entity's image
      * @param {{number}} x
-     *		The entity's X position
+     *        The entity's X position
      * @param {{number}} y
-     *		The entity's Y position
+     *        The entity's Y position
      * @param {{number}} offsetX
-     *		The entity's horizontal offset position
+     *        The entity's horizontal offset position
      * @param {{number}} offsetY
-     *		The entity's vertical offset position
+     *        The entity's vertical offset position
+     * @param {{object}} bounds
+     *        The rectangle of the entity inside its image:
+     *            x       - The entity's X position relative to the image
+     *            y       - The entity's Y position relative to the image
+     *            width   - The entity's width inside the image
+     *            height  - The entity's height inside the image
      */
-	var Entity = function(sprite, x, y, offsetX, offsetY) {
-		this.x = x;
-		this.y = y;
-		this.offsetX = offsetX || 0;
-		this.offsetY = offsetY || 0;
-		this.sprite = sprite;
-		if (this.sprite) {
-			this.img = Resources.get(this.sprite);
-		}
-	};
+    var Entity = function(sprite, x, y, offsetX, offsetY, bounds) {
+        this.x = x;
+        this.y = y;
 
-	Entity.prototype = {
-		/**
-		 * Get the cached image from Resources
-		 */
-		getImage: function() {
-			this.img = Resources.get(this.sprite);
-			return this.img;
-		},
-		/**
-	     * Render the block using the context
-	     * @param {{object}} ctx
-	     *      The canvas context
-	     */
-		render: function(ctx) {
-	        var img = this.getImage();
-	        ctx.drawImage(img, this.x * img.width + this.offsetX, this.y * blockHeight + this.offsetY);
-	    }
-	};
+        this.checkBounds = true;
+        this.offsetX = offsetX || 0;
+        this.offsetY = offsetY || 0;
+        this.bounds = bounds;
+        this.sprite = sprite;
+        if (this.sprite) {
+            this.img = Resources.get(this.sprite);
+        }
+    };
+
+    Entity.prototype = {
+        /**
+         * Get the cached image from Resources
+         */
+        getImage: function() {
+            this.img = Resources.get(this.sprite);
+            return this.img;
+        },
+        /**
+         * Render the block using the context
+         * @param {{object}} ctx
+         *      The canvas context
+         */
+        render: function(ctx) {
+            var img = this.getImage();
+            ctx.drawImage(img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
+
+            if (Helpers.getDrawBounds() && this.checkBounds) {
+                this.drawBounds(ctx);
+            }
+        },
+        getBounds: function() {
+            var b = this.bounds || {};
+            return {
+                x:  this.x * blockWidth + (b.x || 0),
+                y:  this.y * blockHeight + (b.y || 0),
+                width: b.width || blockWidth,
+                height: b.height || blockHeight
+            };
+        },
+        drawBounds: function(ctx) {
+            var b = this.getBounds();
+            if (!b) {
+                return;
+            }
+            ctx.strokeStyle = '#ff0000';
+            ctx.strokeRect(b.x, b.y, b.width, b.height);
+        }
+    };
 
     /**
      * Create a block by specifying a type and its position
      * @constructor
      */
     var Block = function(type, x, y) {
-    	this.type = type;
-    	// Use the constructor of its parent class Entity
-    	Entity.call(this, Block.types[this.type], x, y);
+        // Use the constructor of its parent class Entity
+        Entity.call(this, Block.types[type], x, y);
+        this.type = type;
+        this.checkBounds = false;
     };
 
     /** Inherit properties and functions from Entity class */
@@ -84,13 +116,16 @@
      * @constructor
      */
     var Player = function(character, x, y) {
-    	this.character = character;
-    	// Use the constructor of its parent class Entity
-        Entity.call(this, Player.characters[character], x, y, 0, -10);
+        this.character = character;
+
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 16, y: blockHeight - 30, width: blockWidth - 31, height: blockHeight - 6 };
+        // Use the constructor of its parent class Entity
+        Entity.call(this, Player.characters[character], x, y, 0, -10, bounds);
     };
 
     /** Inherit properties and functions from Entity class */
-	Player.inheritsFrom(Entity);
+    Player.inheritsFrom(Entity);
 
     /** Get all the images used for Player */
     Player.getSprites = function() {
@@ -112,7 +147,7 @@
         down: [0, 1]
     };
 
-	/**
+    /**
      * Move the player in the grid
      * @param {{string}} move
      *         A valid move defined in Player.validMoves
@@ -121,7 +156,7 @@
      * @param {{int}} columns
      *        The number of columns in the grid
      */
-	Player.prototype.move = function(move, rows, columns) {
+    Player.prototype.move = function(move, rows, columns) {
         var movement = Player.validMoves[move];
 
         /* Check if move is valid and has x and y values */
@@ -144,8 +179,11 @@
      * @constructor
      */
     var Enemy = function(x, y, speed) {
-    	// Use the constructor of its parent class Entity
-    	Entity.call(this, Enemy.sprite, x, y, 0, -20);
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 2, y: blockHeight - 26, width: blockWidth - 4, height: blockHeight - 16 };
+
+        // Use the constructor of its parent class Entity
+        Entity.call(this, Enemy.sprite, x, y, 0, -20, bounds);
         this.speed = speed;
     };
 
@@ -155,7 +193,7 @@
     /** The image of the enemy */
     Enemy.sprite = "images/enemy-bug.png";
 
-	/**
+    /**
      * Update the position of the enemy by passing the delta time
      * @param {{float}} dt
      *         The delta time or the number of time that passed from the last

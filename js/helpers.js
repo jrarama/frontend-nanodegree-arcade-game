@@ -4,7 +4,11 @@
  * are maintained here.
  */
 (function() {
+    /** variable to draw a rectangle around the entity to visualize its the boundary */
+    var drawBounds = false;
+
     /** Make Helpers available globally by setting it a property of window. */
+
     window.Helpers = {
         /**
          * This function is used to loop through each object property
@@ -43,6 +47,12 @@
         /** Used to check whether a position is inside the bounds of the game grid */
         withinGrid: function(pos, rows, columns) {
             return pos && Helpers.within(pos.x, 0, columns - 1) && Helpers.within(pos.y, 0, rows - 1);
+        },
+        setDrawBounds: function(bool) {
+            drawBounds = bool;
+        },
+        getDrawBounds: function() {
+            return drawBounds;
         }
     };
 
