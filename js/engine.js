@@ -25,7 +25,8 @@
         allEnemies = [],
         blocks = [],
         lastTime,
-        paused;
+        paused,
+        score;
 
     Resources.setContext(ctx);
     canvas.width = 505;
@@ -106,7 +107,10 @@
      */
     function update(dt) {
         updateEntities(dt);
-        checkCollisions();
+        var ok = checkCollisions();
+        if (ok) {
+            checkPowerUps();
+        }
     }
 
     /**
@@ -131,7 +135,7 @@
 
     function checkCollisions() {
         if (player.dead) {
-            return;
+            return false;
         }
         // check collision with enemies
         var rect1 = player.getBounds();
@@ -140,8 +144,26 @@
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
                 player.setDead(true);
+                score = 0;
+                return;
             }
         });
+
+        return !player.dead;
+    }
+
+    function checkPowerUps() {
+        if (player.animating) {
+            return;
+        }
+        // Get the indices of water
+        var ind = Helpers.blockIndices(Resources.getGrid().rows, 'W');
+        var y = Math.round(player.y + 0.4);
+        if (ind.indexOf(y) > -1) {
+            player.y = y;
+            score++;
+            player.setGoal(true);
+        }
     }
 
     /**
@@ -159,6 +181,8 @@
         });
 
         renderEntities();
+
+        renderScore();
     }
 
     /**
@@ -181,6 +205,7 @@
      */
     function reset() {
         paused = false;
+        score = 0;
         pressedKeys = {
             left: false,
             right: false,
@@ -290,6 +315,21 @@
             }
             player.move(moves);
         }
+    }
+
+    function renderScore() {
+        ctx.save();
+
+        ctx.font = '25px Exo';
+        ctx.textAlign = 'right';
+
+        ctx.strokeStyle = '#00f';
+        ctx.strokeText('Score: ' + score, canvas.width - 10, 30);
+
+        ctx.fillStyle = '#333';
+        ctx.fillText('Score: ' + score, canvas.width - 10, 30);
+
+        ctx.restore();
     }
 
     /**

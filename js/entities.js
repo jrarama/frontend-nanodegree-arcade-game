@@ -143,8 +143,8 @@
         // Sets the speed of the player.
         this.speed = 1.5;
 
-        // Set dead properties
-        this.setDead(false);
+        this.animating = false;
+        this.animationTimer = 0;
     };
 
     /** Inherit properties and functions from Entity class */
@@ -217,7 +217,7 @@
      */
     Player.prototype.update = function(dt) {
         var movement = this.movement;
-        if (!this.dead && movement) {
+        if (!this.animating && movement) {
             var distance = this.speed * dt;
             var newX = this.x + (movement.x * distance);
             var newY = this.y + (movement.y * distance);
@@ -231,7 +231,9 @@
         }
 
         if (this.dead) {
-            this.deathAnimation();
+            this.deathAnimation(dt);
+        } else if (this.goal) {
+            this.goalAnimation(dt);
         }
     };
 
@@ -240,12 +242,28 @@
      * its position
      */
     Player.prototype.deathAnimation = function(dt) {
-        this.deadTime += dt * 5;
-        if (this.deadTime > 8) {
+        this.animationTimer -= dt;
+        this.animationTime += dt * 5;
+        if (this.animationTimer <= 0) {
             // make the player alive and reset its position
             this.setDead(false, true);
         } else {
-            this.opacity = Math.abs(Math.sin(this.deadTime));
+            this.opacity = Math.abs(Math.sin(1 - this.animationTime));
+        }
+    };
+
+    /**
+     * Animate the opacity of the player when it hits the water
+     */
+    Player.prototype.goalAnimation = function(dt) {
+        this.animationTimer -= dt;
+        this.animationTime += dt * 5;
+        if (this.animationTimer <= 0) {
+            // make the player alive and reset its position
+            this.setGoal(false, true);
+        } else {
+            // TODO: change the animation for goal
+            this.opacity = Math.abs(Math.sin(1 - this.animationTime));
         }
     };
 
@@ -254,6 +272,7 @@
      * position and random x position.
      */
     Player.prototype.reset = function() {
+        this.opacity = 1;
         var grid = Resources.getGrid();
         /* select a ramdom x position */
         var xPos = Math.floor(Math.random() * grid.nColumns);
@@ -263,17 +282,38 @@
     };
 
     /**
-     * Flag the player as dead and reset the deadTime to zero
-     * which is used for animation.
-     * @param {{boolean}} bool
+     * Flag the player as dead and set the animation timer
+     * @param {{boolean}} dead
      *        Whether the player is dead or not
      * @param {{boolean}} reset
      *        Whether the players position should be reset or not
      */
-    Player.prototype.setDead = function(bool, reset) {
-        this.dead = bool;
-        this.deadTime = 0;
+    Player.prototype.setDead = function(dead, reset) {
+        this.dead = dead;
+        this.setAnimating(dead, 2);
         this.opacity = 1;
+
+        if (reset) {
+            this.reset();
+        }
+    };
+
+    Player.prototype.setAnimating = function(animate, time) {
+        this.animating = animate;
+        this.animationTimer = animate ? time : 0;
+        this.animationTime = 0;
+    };
+
+    /**
+     * Flag the player as having won a goal and set the animation timer
+     * @param {{boolean}} goal
+     *        Whether the player has won a goal or not
+     * @param {{boolean}} reset
+     *        Whether the players position should be reset or not
+     */
+    Player.prototype.setGoal = function(goal, reset) {
+        this.goal = goal;
+        this.setAnimating(goal, 2);
 
         if (reset) {
             this.reset();

@@ -64,20 +64,33 @@
         },
 
         /**
+         * return the indices the the blocks.
+         * @param {{string}} blocks
+         *      A string that contains G, S, or W;
+         * @param {{string}} blockType
+         *      A single letter that is either G, S, or W;
+         */
+        blockIndices: function(blocks, blockType) {
+            var i, b = (blocks || ''), t = (blockType || '').slice(0);
+            var ind = [];
+            for(i = 0; i < b.length; i++) {
+                if (b[i] == t) {
+                    ind.push(i);
+                }
+            }
+            return ind;
+        },
+        /**
          * return a random index of a block type from a list of blocks
          * @param {{string}} blocks
          *      A string that contains G, S, or W only. E.g. "WSSSGG" means
          *      the first row is water, the 2nd to 4th row is stone and the
          *      last two rows will be grass.
+         * @param {{string}} blockType
+         *      A single letter that is either G, S, or W;
          */
         randomIndex: function(blocks, blockType) {
-            var i, b = (blocks || '').replace(/[^SWG]/g, '');
-            var ind = [];
-            for(i = 0; i < b.length; i++) {
-                if (b[i] == blockType) {
-                    ind.push(i);
-                }
-            }
+            var ind = Helpers.blockIndices(blocks, blockType);
             var rnd = Math.floor(Math.random() * ind.length);
             return ind[rnd];
         }
