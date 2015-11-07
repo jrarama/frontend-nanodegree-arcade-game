@@ -45,4 +45,20 @@
             return pos && Helpers.within(pos.x, 0, columns - 1) && Helpers.within(pos.y, 0, rows - 1);
         }
     };
+
+    /** A utility function to inherit from another function */
+    Function.prototype.inheritsFrom = function (parentClassOrObject) {
+        if (parentClassOrObject.constructor == Function) {
+            //Normal Inheritance
+            this.prototype = Object.create(parentClassOrObject.prototype);
+            this.prototype.constructor = this;
+            this.prototype.parent = parentClassOrObject.prototype;
+        } else {
+            //Pure Virtual Inheritance
+            this.prototype = parentClassOrObject;
+            this.prototype.constructor = this;
+            this.prototype.parent = parentClassOrObject.prototype;
+        }
+        return this;
+    };
 })();
