@@ -10,6 +10,7 @@
     var readyCallbacks = [];
     var context = null;
     var grid = { rows: "WSSSGG", nRows: 6, nColumns: 5 };
+    var gameOver = false;
 
     /* This is the publicly accessible image loading function. It accepts
      * an array of strings pointing to image files or a string for a single
@@ -132,6 +133,14 @@
         /** Gets the grid options */
         getGrid: function() {
             return grid;
+        },
+
+        setGameOver: function(over) {
+            gameOver = over;
+        },
+
+        isGameOver: function() {
+            return gameOver;
         }
     };
 })();

@@ -246,7 +246,11 @@
         this.animationTime += dt * 5;
         if (this.animationTimer <= 0) {
             // make the player alive and reset its position
-            this.setDead(false, true);
+
+            this.setDead(false, !Resources.isGameOver());
+            if (typeof this.deathCallback == 'function') {
+                this.deathCallback();
+            }
         } else {
             this.opacity = Math.abs(Math.sin(1 - this.animationTime));
         }
@@ -365,8 +369,26 @@
         this.speed = 1 + Math.random() * 2;
     };
 
+    /**
+     * Create a new heart specifying its X location
+     * @constructor
+     */
+    var Heart = function(x) {
+        Entity.call(this, Heart.sprite, x, 0, 0, -25);
+    };
+    Heart.sprite = 'images/Heart.png';
+    Heart.prototype.render = function() {
+        var ctx = Resources.getContext();
+        ctx.save();
+        ctx.scale(0.4, 0.4);
+        ctx.globalAlpha = this.opacity;
+        ctx.drawImage(this.img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
+        ctx.restore();
+    };
+
     /* Expose the entities to the outside world so that they can be used in other scripts */
     window.Player = Player;
     window.Block = Block;
     window.Enemy = Enemy;
+    window.Heart = Heart;
 })();

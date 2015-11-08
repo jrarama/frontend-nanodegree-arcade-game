@@ -23,10 +23,12 @@
         ctx = canvas.getContext('2d'),
         player = null,
         allEnemies = [],
+        allLives = [],
         blocks = [],
         lastTime,
         paused,
-        score;
+        score,
+        lives;
 
     Resources.setContext(ctx);
     canvas.width = 505;
@@ -107,9 +109,12 @@
      */
     function update(dt) {
         updateEntities(dt);
-        var ok = checkCollisions();
-        if (ok) {
-            checkPowerUps();
+
+        if (!Resources.isGameOver()) {
+            var ok = checkCollisions();
+            if (ok) {
+                checkPowerUps();
+            }
         }
     }
 
@@ -143,8 +148,11 @@
         allEnemies.forEach(function(enemy) {
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
-                player.setDead(true);
                 score = 0;
+                lives--;
+
+                Resources.setGameOver(lives === 0);
+                player.setDead(true);
                 return;
             }
         });
@@ -174,15 +182,26 @@
      * they are just drawing the entire screen over and over.
      */
     function render() {
+        var i, heart;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         blocks.forEach(function(block) {
             block.render();
         });
 
+        for(i = 0; i < allLives.length; i ++) {
+            heart = allLives[i];
+            heart.opacity = i >= lives ? 0.4 : 1;
+            heart.render();
+        }
+
         renderEntities();
 
         renderScore();
+
+        if (Resources.isGameOver()) {
+            renderGameOver();
+        }
     }
 
     /**
@@ -204,8 +223,10 @@
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
+        Resources.setGameOver(false);
         paused = false;
         score = 0;
+        lives = 3;
         pressedKeys = {
             left: false,
             right: false,
@@ -224,6 +245,7 @@
         images = images.concat(Player.getSprites());
         images = images.concat(Block.getSprites());
         images.push(Enemy.sprite);
+        images.push(Heart.sprite);
 
         Resources.load(images);
         Resources.onReady(init);
@@ -235,11 +257,13 @@
      */
     function initEntities() {
         allEnemies = [];
+        allLives = [];
         blocks =  [];
 
         initBlocks();
         initPlayer();
         initEnemies();
+        initHearts();
     }
 
     /** Initialize the player's properties */
@@ -251,6 +275,11 @@
         /* create the player */
         player = new Player(characters[charInd]);
         player.reset();
+        player.deathCallback = function() {
+            if (Resources.isGameOver()) {
+                paused = true;
+            }
+        };
     }
 
     /**
@@ -278,6 +307,17 @@
         }
     }
 
+    /**
+     * Initialize hearts
+     */
+    function initHearts() {
+        var i;
+        for (i = 0; i < 3; i++) {
+            var heart = new Heart(i);
+            allLives.push(heart);
+        }
+    }
+
     /** Handle the keyboard keyup events. */
     doc.addEventListener('keyup', function(e) {
         var move = movementKeys[e.keyCode];
@@ -288,7 +328,11 @@
 
         switch (e.keyCode) {
             case 27: // Escape key
-                paused = !paused; // Toggle pause
+                if (!Resources.isGameOver()) {
+                    paused = !paused; // Toggle pause
+                } else {
+                    init();
+                }
                 break;
         }
     });
@@ -328,6 +372,31 @@
 
         ctx.fillStyle = '#333';
         ctx.fillText('Score: ' + score, canvas.width - 10, 30);
+
+        ctx.restore();
+    }
+
+    function renderGameOver() {
+        ctx.save();
+        ctx.font = '48px Exo';
+        ctx.textAlign = 'center';
+        var w2 = canvas.width / 2;
+        var h2 = canvas.height / 2;
+
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 8;
+        ctx.strokeText('GAME OVER', w2, h2);
+
+        ctx.fillStyle = '#eee';
+        ctx.fillText('GAME OVER', w2, h2);
+
+        ctx.font = '20px Exo';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#333';
+        ctx.strokeText('Press ESC for New Game', w2, h2 + 50);
+
+        ctx.fillStyle = '#fff';
+        ctx.fillText('Press ESC for New Game', w2, h2 + 50);
 
         ctx.restore();
     }
