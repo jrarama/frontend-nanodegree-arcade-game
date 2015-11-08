@@ -361,6 +361,7 @@
         }
     }
 
+    /** Render the score on the top right corner */
     function renderScore() {
         ctx.save();
 
@@ -376,6 +377,7 @@
         ctx.restore();
     }
 
+    /** Render the Game Over message when the game is over */
     function renderGameOver() {
         ctx.save();
         ctx.font = '48px Exo';

@@ -42,8 +42,10 @@
         this.checkBounds = true;
 
         this.opacity = 1;
+        this.scale = 1;
         this.offsetX = offsetX || 0;
         this.offsetY = offsetY || 0;
+        this.translate = { x: 0, y: 0 };
         this.bounds = bounds;
         this.sprite = sprite;
         if (this.sprite) {
@@ -65,13 +67,21 @@
         render: function() {
             var img = this.getImage();
             var ctx = Resources.getContext();
+            ctx.save();
             ctx.globalAlpha = this.opacity;
+            if (this.scale !== 1) {
+            	ctx.scale(this.scale, this.scale);
+            }
+            if (this.translate !== 0 || this.translate !== 0) {
+	            ctx.translate(this.translate.x, this.translate.y);
+	        }
             ctx.drawImage(img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
             ctx.globalAlpha = 1.0;
-
+            ctx.restore();
             if (Helpers.getDrawBounds() && this.checkBounds) {
                 this.drawBounds(ctx);
             }
+
         },
         /**
          * Get the actual rectangle coordinate of the entity's bounds
@@ -266,8 +276,7 @@
             // make the player alive and reset its position
             this.setGoal(false, true);
         } else {
-            // TODO: change the animation for goal
-            this.opacity = Math.abs(Math.sin(1 - this.animationTime));
+            this.translate.y = Math.abs(Math.sin(this.animationTime)) * -15;
         }
     };
 
@@ -277,6 +286,7 @@
      */
     Player.prototype.reset = function() {
         this.opacity = 1;
+        this.translate = { x:0, y: 0 };
         var grid = Resources.getGrid();
         /* select a ramdom x position */
         var xPos = Math.floor(Math.random() * grid.nColumns);
@@ -375,16 +385,12 @@
      */
     var Heart = function(x) {
         Entity.call(this, Heart.sprite, x, 0, 0, -25);
+        this.scale = 0.4;
     };
     Heart.sprite = 'images/Heart.png';
-    Heart.prototype.render = function() {
-        var ctx = Resources.getContext();
-        ctx.save();
-        ctx.scale(0.4, 0.4);
-        ctx.globalAlpha = this.opacity;
-        ctx.drawImage(this.img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
-        ctx.restore();
-    };
+
+    /** Inherit properties and functions from Entity class */
+    Heart.inheritsFrom(Entity);
 
     /* Expose the entities to the outside world so that they can be used in other scripts */
     window.Player = Player;
