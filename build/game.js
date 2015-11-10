@@ -145,6 +145,7 @@
     var context = null;
     var grid = { rows: "WSSSGG", nRows: 6, nColumns: 5 };
     var gameOver = false;
+    var imagePath = 'images/';
 
     /* This is the publicly accessible image loading function. It accepts
      * an array of strings pointing to image files or a string for a single
@@ -172,6 +173,8 @@
      * called by the public image loader function.
      */
     function _load(url) {
+        var path = imagePath + url;
+
         if(resourceCache[url]) {
             /* If this URL has been previously loaded it will exist within
              * our resourceCache array. Just return that image rather
@@ -203,7 +206,7 @@
              * the images src attribute to the passed in URL.
              */
             resourceCache[url] = false;
-            img.src = url;
+            img.src = path;
         }
     }
 
@@ -275,6 +278,14 @@
 
         isGameOver: function() {
             return gameOver;
+        },
+
+        setImagePath: function(path) {
+            imagePath = path || imagePath;
+        },
+
+        getImagePath: function() {
+            return imagePath;
         }
     };
 })();
@@ -401,9 +412,9 @@
 
     /** The block types with their image paths as its value */
     Block.types = {
-        'G': 'images/grass-block.png',
-        'S': 'images/stone-block.png',
-        'W': 'images/water-block.png'
+        'G': 'grass-block.png',
+        'S': 'stone-block.png',
+        'W': 'water-block.png'
     };
 
     /** Get all the images used for Block */
@@ -440,9 +451,9 @@
 
     /** The player characters with their image paths as its value */
     Player.characters = {
-        'boy': 'images/char-boy.png',
-        'cat-girl': 'images/char-cat-girl.png',
-        'pink-girl': 'images/char-pink-girl.png'
+        'boy': 'char-boy.png',
+        'cat-girl': 'char-cat-girl.png',
+        'pink-girl': 'char-pink-girl.png'
     };
 
     /** The list of valid moves with x and y changes it will make */
@@ -506,9 +517,12 @@
             var newY = this.y + (movement.y * distance);
 
             var grid = Resources.getGrid();
-            /* Check if the new positions are within the grid before setting it */
-            if (Helpers.withinGrid({ x: newX, y: newY }, grid.nRows, grid.nColumns)) {
+            /* Check if the newX position is within the grid before setting it */
+            if (Helpers.withinGrid({ x: newX, y: this.y }, grid.nRows, grid.nColumns)) {
                 this.x = newX;
+            }
+            /* Check if the newY position is within the grid before setting it */
+            if (Helpers.withinGrid({ x: this.x, y: newY }, grid.nRows, grid.nColumns)) {
                 this.y = newY;
             }
         }
@@ -628,7 +642,7 @@
     Enemy.inheritsFrom(Entity);
 
     /** The image of the enemy */
-    Enemy.sprite = "images/enemy-bug.png";
+    Enemy.sprite = "enemy-bug.png";
 
     /**
      * Update the position of the enemy by passing the delta time
@@ -665,7 +679,7 @@
         this.scale = 0.4;
         this.checkBounds = false;
     };
-    Heart.sprite = 'images/heart.png';
+    Heart.sprite = 'heart.png';
 
     /** Inherit properties and functions from Entity class */
     Heart.inheritsFrom(Entity);
@@ -705,9 +719,9 @@
 
     /** Types of gem */
     Gem.types = {
-        blue: 'images/gem-blue.png',
-        green: 'images/gem-green.png',
-        orange: 'images/gem-orange.png'
+        blue: 'gem-blue.png',
+        green: 'gem-green.png',
+        orange: 'gem-orange.png'
     };
 
     /** Get all the images used for Gem */
@@ -726,7 +740,7 @@
         //this.scale = 0.75;
     };
 
-    Star.sprite = 'images/star.png';
+    Star.sprite = 'star.png';
 
     /** Inherit properties and functions from Entity class */
     Star.inheritsFrom(Collectible);
@@ -743,7 +757,7 @@
         this.scale = 0.9;
     };
 
-    Key.sprite = 'images/key.png';
+    Key.sprite = 'key.png';
 
     /** Inherit properties and functions from Entity class */
     Key.inheritsFrom(Collectible);
@@ -773,8 +787,8 @@
         blocks = [],
         lastTime,
         paused,
-        score,
-        level,
+        score = 0,
+        level = 1,
         changeRows,
         lives;
 
@@ -1277,6 +1291,9 @@
             var o = opts || {};
             if (o.grid) {
                 Resources.setGrid(o.grid.rows, o.grid.nColumns);
+            }
+            if (o.imagePath) {
+                Resources.setImagePath(o.imagePath);
             }
             loadResources();
         }

@@ -11,6 +11,7 @@
     var context = null;
     var grid = { rows: "WSSSGG", nRows: 6, nColumns: 5 };
     var gameOver = false;
+    var imagePath = 'images/';
 
     /* This is the publicly accessible image loading function. It accepts
      * an array of strings pointing to image files or a string for a single
@@ -38,6 +39,8 @@
      * called by the public image loader function.
      */
     function _load(url) {
+        var path = imagePath + url;
+
         if(resourceCache[url]) {
             /* If this URL has been previously loaded it will exist within
              * our resourceCache array. Just return that image rather
@@ -69,7 +72,7 @@
              * the images src attribute to the passed in URL.
              */
             resourceCache[url] = false;
-            img.src = url;
+            img.src = path;
         }
     }
 
@@ -141,6 +144,14 @@
 
         isGameOver: function() {
             return gameOver;
+        },
+
+        setImagePath: function(path) {
+            imagePath = path || imagePath;
+        },
+
+        getImagePath: function() {
+            return imagePath;
         }
     };
 })();

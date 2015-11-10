@@ -27,8 +27,8 @@
         blocks = [],
         lastTime,
         paused,
-        score,
-        level,
+        score = 0,
+        level = 1,
         changeRows,
         lives;
 
@@ -531,6 +531,9 @@
             var o = opts || {};
             if (o.grid) {
                 Resources.setGrid(o.grid.rows, o.grid.nColumns);
+            }
+            if (o.imagePath) {
+                Resources.setImagePath(o.imagePath);
             }
             loadResources();
         }
