@@ -41,7 +41,8 @@ module.exports = function(grunt) {
                 curly: true,
                 eqnull: true,
                 predef: ['console', 'window', 'document', 'Image', 'Resources',
-                    'Player', 'Block', 'Enemy', 'Engine', 'Helpers', 'Heart'
+                    'Player', 'Block', 'Enemy', 'Engine', 'Helpers', 'Heart',
+                    'Key', 'Star', 'Gem'
                 ]
             }
         },

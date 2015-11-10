@@ -28,6 +28,8 @@
         lastTime,
         paused,
         score,
+        level,
+        changeRows,
         lives;
 
     Resources.setContext(ctx);
@@ -50,6 +52,26 @@
         up: false,
         down: false
     };
+
+    var collectibles = {
+        key: false,
+        gem: false,
+        life: false
+    };
+
+    function newGridRows() {
+        var rows = Helpers.shuffleArray('SSSGG'.split('')).join('');
+        rows = Helpers.shuffleArray(['W', rows]).join('');
+        Resources.setGrid(rows);
+    }
+
+    function generateLevel(lvl) {
+        collectibles = {
+            key: lvl % 7 === 0,
+            life: lvl % 5 === 0,
+            gem: lvl % 2 === 0
+        };
+    }
 
     /**
      * This function serves as the kickoff point for the game loop itself
@@ -92,9 +114,8 @@
      */
     function init() {
         reset();
-
-        /* Initialize all entities */
-        initEntities();
+        /* Initialize the level */
+        initLevel();
 
         lastTime = Date.now();
         main();
@@ -148,7 +169,6 @@
         allEnemies.forEach(function(enemy) {
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
-                score = 0;
                 lives--;
 
                 Resources.setGameOver(lives === 0);
@@ -160,10 +180,7 @@
         return !player.dead;
     }
 
-    function checkPowerUps() {
-        if (player.animating) {
-            return;
-        }
+    function checkGoal() {
         // Get the indices of water
         var ind = Helpers.blockIndices(Resources.getGrid().rows, 'W');
         var y = Math.round(player.y + 0.4);
@@ -171,6 +188,41 @@
             player.y = y;
             score++;
             player.setGoal(true);
+        }
+    }
+
+    function checkPowerUps() {
+        if (player.animating) {
+            return;
+        }
+        checkGoal();
+        var rect2 = null, rect1 = player.getBounds();
+
+        if (collectibles.gem) {
+            rect2 = collectibles.gem.getBounds();
+            if (Helpers.rectCollision(rect1, rect2)) {
+                score += 1;
+                collectibles.gem = false;
+            }
+        }
+        if (collectibles.life) {
+            rect2 = collectibles.life.getBounds();
+            if (Helpers.rectCollision(rect1, rect2)) {
+                lives++;
+                if (lives > 3) {
+                    lives = 3;
+                }
+                score += 2;
+                collectibles.life = false;
+            }
+        }
+        if (collectibles.key) {
+            rect2 = collectibles.key.getBounds();
+            if (Helpers.rectCollision(rect1, rect2)) {
+                changeRows = true;
+                score += 3;
+                collectibles.key = false;
+            }
         }
     }
 
@@ -183,7 +235,8 @@
      */
     function render() {
         var i, heart;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         blocks.forEach(function(block) {
             block.render();
@@ -195,9 +248,11 @@
             heart.render();
         }
 
+        renderCollectibles();
         renderEntities();
 
         renderScore();
+        renderLevel();
 
         if (Resources.isGameOver()) {
             renderGameOver();
@@ -217,16 +272,31 @@
         player.render();
     }
 
+    function renderCollectibles() {
+        if (collectibles.key) {
+            collectibles.key.render();
+        }
+        if (collectibles.life) {
+            collectibles.life.render();
+        }
+        if (collectibles.gem) {
+            collectibles.gem.render();
+        }
+    }
+
     /**
      * This function does nothing but it could have been a good place to
      * handle game reset states - maybe a new game menu or a game over screen
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
+        generateLevel(0);
         Resources.setGameOver(false);
         paused = false;
         score = 0;
         lives = 3;
+        level = 1;
+        changeRows = false;
         pressedKeys = {
             left: false,
             right: false,
@@ -244,8 +314,12 @@
         var images = [];
         images = images.concat(Player.getSprites());
         images = images.concat(Block.getSprites());
+        images = images.concat(Gem.getSprites());
+
         images.push(Enemy.sprite);
         images.push(Heart.sprite);
+        images.push(Star.sprite);
+        images.push(Key.sprite);
 
         Resources.load(images);
         Resources.onReady(init);
@@ -266,6 +340,31 @@
         initHearts();
     }
 
+    function initLevel() {
+        if (changeRows) {
+            newGridRows();
+            changeRows = false;
+        }
+        generateLevel(level);
+        initCollectibles();
+
+        initEntities();
+    }
+
+    function initCollectibles() {
+        if (collectibles.key === true) {
+            collectibles.key = new Key();
+        }
+
+        if (collectibles.life === true) {
+            collectibles.life = new Star();
+        }
+
+        if (collectibles.gem === true) {
+            collectibles.gem = new Gem();
+        }
+    }
+
     /** Initialize the player's properties */
     function initPlayer() {
         /* select a random character */
@@ -280,6 +379,10 @@
                 paused = true;
             }
         };
+        player.goalCallback = function() {
+            ++level;
+            initLevel();
+        };
     }
 
     /**
@@ -287,7 +390,7 @@
      * their position and speed randomly by calling its reset function.
      */
     function initEnemies() {
-        var i;
+        var i, maxSpeed = 2 + (0.07 * level);
         for (i = 0; i < 3; i++) {
             var enemy = new Enemy();
             enemy.reset();
@@ -373,6 +476,21 @@
 
         ctx.fillStyle = '#333';
         ctx.fillText('Score: ' + score, canvas.width - 10, 30);
+
+        ctx.restore();
+    }
+
+    function renderLevel() {
+        ctx.save();
+
+        ctx.font = '25px Exo';
+        ctx.textAlign = 'center';
+
+        ctx.strokeStyle = '#00f';
+        ctx.strokeText('Level ' + level, canvas.width / 2, 30);
+
+        ctx.fillStyle = '#333';
+        ctx.fillText('Level ' + level, canvas.width / 2, 30);
 
         ctx.restore();
     }

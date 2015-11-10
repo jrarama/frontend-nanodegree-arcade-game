@@ -69,13 +69,13 @@
             var ctx = Resources.getContext();
             ctx.save();
             ctx.globalAlpha = this.opacity;
-            if (this.scale !== 1) {
-            	ctx.scale(this.scale, this.scale);
-            }
             if (this.translate !== 0 || this.translate !== 0) {
-	            ctx.translate(this.translate.x, this.translate.y);
-	        }
-            ctx.drawImage(img, this.x * blockWidth + this.offsetX, this.y * blockHeight + this.offsetY);
+                ctx.translate(this.translate.x, this.translate.y);
+            }
+            var x = (this.x * blockWidth + this.offsetX);
+            var y = (this.y * blockHeight + this.offsetY);
+
+            ctx.drawImage(img, x, y, img.width * this.scale, img.height * this.scale);
             ctx.globalAlpha = 1.0;
             ctx.restore();
             if (Helpers.getDrawBounds() && this.checkBounds) {
@@ -275,6 +275,9 @@
         if (this.animationTimer <= 0) {
             // make the player alive and reset its position
             this.setGoal(false, true);
+            if (typeof this.goalCallback == 'function') {
+                this.goalCallback();
+            }
         } else {
             this.translate.y = Math.abs(Math.sin(this.animationTime)) * -15;
         }
@@ -288,7 +291,7 @@
         this.opacity = 1;
         this.translate = { x:0, y: 0 };
         var grid = Resources.getGrid();
-        /* select a ramdom x position */
+        /* select a random x position */
         var xPos = Math.floor(Math.random() * grid.nColumns);
         this.x = xPos;
         /* Set the Y position to a random Grass row */
@@ -338,13 +341,14 @@
      * Create an Enemy by specifying its position and speed
      * @constructor
      */
-    var Enemy = function(x, y, speed) {
+    var Enemy = function(maxSpeed, x, y) {
         // Set the boundary of the entity inside its image
         var bounds = { x: 2, y: blockHeight - 26, width: blockWidth - 4, height: blockHeight - 16 };
 
         // Use the constructor of its parent class Entity
         Entity.call(this, Enemy.sprite, x, y, 0, -20, bounds);
-        this.speed = speed;
+        this.maxSpeed = maxSpeed || 2.5;
+        this.speed = maxSpeed;
     };
 
     /** Inherit properties and functions from Entity class */
@@ -376,7 +380,7 @@
         /* Set the speed.
          * Minimum is 1 block per second and max is 3 blocks per second.
          */
-        this.speed = 1 + Math.random() * 2;
+        this.speed = 1 + Math.random() * (this.maxSpeed - 1);
     };
 
     /**
@@ -384,17 +388,99 @@
      * @constructor
      */
     var Heart = function(x) {
-        Entity.call(this, Heart.sprite, x, 0, 0, -25);
+        Entity.call(this, Heart.sprite, x, 0, x * -55, -15);
         this.scale = 0.4;
+        this.checkBounds = false;
     };
-    Heart.sprite = 'images/Heart.png';
+    Heart.sprite = 'images/heart.png';
 
     /** Inherit properties and functions from Entity class */
     Heart.inheritsFrom(Entity);
+
+
+    var Collectible = function(sprites, offsetX, offsetY, bounds) {
+        var grid = Resources.getGrid();
+
+        var sprite = sprites;
+        if (sprites instanceof Array) {
+            sprite = Helpers.randomItem(sprites);
+        }
+
+        var y = Helpers.randomIndex(grid.rows, 'S');
+        var x = Math.floor(Math.random() * grid.nColumns);
+
+        Entity.call(this, sprite, x, y, offsetX, offsetY, bounds);
+    };
+
+    /** Inherit properties and functions from Entity class */
+    Collectible.inheritsFrom(Entity);
+
+    /**
+     * Create a new Gem collectible by specifying its type and position
+     * @constructor
+     */
+    var Gem = function() {
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 13, y: blockHeight - 30, width: blockWidth - 27, height: blockHeight - 6 };
+
+        Collectible.call(this, Gem.getSprites(), 12, 9, bounds);
+        this.scale = 0.75;
+    };
+
+    /** Inherit properties and functions from Entity class */
+    Gem.inheritsFrom(Collectible);
+
+    /** Types of gem */
+    Gem.types = {
+        blue: 'images/gem-blue.png',
+        green: 'images/gem-green.png',
+        orange: 'images/gem-orange.png'
+    };
+
+    /** Get all the images used for Gem */
+    Gem.getSprites = function() {
+        return Helpers.getObjValues(Gem.types);
+    };
+
+    /**
+     * Create a new Star collectible that will add life
+     * @constructor
+     */
+    var Star = function() {
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 13, y: blockHeight - 25, width: blockWidth - 27, height: blockHeight - 16 };
+        Collectible.call(this, Star.sprite, 0, -10, bounds);
+        //this.scale = 0.75;
+    };
+
+    Star.sprite = 'images/star.png';
+
+    /** Inherit properties and functions from Entity class */
+    Star.inheritsFrom(Collectible);
+
+    /**
+     * Create a new Key collectible that will change the row blocks
+     * and give extra points
+     * @constructor
+     */
+    var Key = function() {
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 30, y: blockHeight - 30, width: blockWidth - 60, height: blockHeight - 6 };
+        Collectible.call(this, Key.sprite, 4, 2, bounds);
+        this.scale = 0.9;
+    };
+
+    Key.sprite = 'images/key.png';
+
+    /** Inherit properties and functions from Entity class */
+    Key.inheritsFrom(Collectible);
 
     /* Expose the entities to the outside world so that they can be used in other scripts */
     window.Player = Player;
     window.Block = Block;
     window.Enemy = Enemy;
     window.Heart = Heart;
+    window.Gem = Gem;
+    window.Star = Star;
+    window.Key = Key;
 })();

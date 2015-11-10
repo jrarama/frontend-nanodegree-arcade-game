@@ -80,6 +80,10 @@
             }
             return ind;
         },
+        randomItem: function(array) {
+            var rnd = Math.floor(Math.random() * array.length);
+            return array[rnd];
+        },
         /**
          * return a random index of a block type from a list of blocks
          * @param {{string}} blocks
@@ -93,6 +97,28 @@
             var ind = Helpers.blockIndices(blocks, blockType);
             var rnd = Math.floor(Math.random() * ind.length);
             return ind[rnd];
+        },
+
+        /**
+         * Shuffle an array
+         */
+        shuffleArray: function(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex ;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+
+                // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+
+          return array;
         }
     };
 
