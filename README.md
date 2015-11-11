@@ -1,6 +1,32 @@
-frontend-nanodegree-arcade-game
-===============================
+Go For Water Game
+=================
 
-Students should use this rubric: https://www.udacity.com/course/viewer#!/c-ud015/l-3072058665/m-3072588797
+The objective of the game is for the player to reach the water, collect many collectibles (gem, star and key) to score points, and avoid the bugs to prevent losing a life.
 
-for self-checking their submission.
+### Controls
+
+**`Arrow` Keys** -
+Use the Arrow Keys to move the player.
+
+**`ESC` Key** -
+During the game, press the `Esc` key to pause the game. When the game is over, press the `Esc` key to play a *New Game*.
+
+### Scoring
+There are 2 ways on how to earn points and increase the score:
+ 1. Reach the water and earn **1 point**
+ 2. Collect items on the road (gem, star, key) and earn **1 - 2 points**
+
+### Levels
+The level will increase once the player reached the water.
+
+### Collectibles
+ * **Gem** - collecting a gem will give you **1 point**
+ * **Star** - collecting a star will give you **2 points** and **1 extra life**
+ * **Key** - collecting a key will give you **2 points** and new game row combinations
+
+### Life
+Initially, the player have **3 lives** as indicated by the 3 hearts at the upper left corner of the screen.
+
+The player can lose a life by colliding with an enemy (bug).
+
+The player can earn a life by collecting a star. It will have **at most 3 lives** only.
