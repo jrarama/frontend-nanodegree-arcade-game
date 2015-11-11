@@ -15,17 +15,17 @@
     /**
      * Create an Entity by specifying its sprite and its position
      * @constructor
-     * @param {{string}} sprite
+     * @param {string} sprite
      *        The path of entity's image
-     * @param {{number}} x
+     * @param {number} x
      *        The entity's X position
-     * @param {{number}} y
+     * @param {number} y
      *        The entity's Y position
-     * @param {{number}} offsetX
+     * @param {number} offsetX
      *        The entity's horizontal offset position
-     * @param {{number}} offsetY
+     * @param {number} offsetY
      *        The entity's vertical offset position
-     * @param {{object}} bounds
+     * @param {object} bounds
      *        The rectangle of the entity inside its image:
      *            x       - The entity's X position relative to the image
      *            y       - The entity's Y position relative to the image
@@ -184,7 +184,7 @@
      * location of the player here. The update function will be the one
      * who will update the player's position based on some conditions.
      *
-     * @param {{array}} moves
+     * @param {array} moves
      *         An array of valid moves as defined in Player.validMoves
      */
     Player.prototype.move = function(moves) {
@@ -220,7 +220,7 @@
      * update the player's location on the grid. It first check if the new
      * location is within the grid before updating the location.
      *
-     * @param {{number}} dt
+     * @param {number} dt
      *        The delta time or the elapsed time since last update
      */
     Player.prototype.update = function(dt) {
@@ -301,9 +301,9 @@
 
     /**
      * Flag the player as dead and set the animation timer
-     * @param {{boolean}} dead
+     * @param {boolean} dead
      *        Whether the player is dead or not
-     * @param {{boolean}} reset
+     * @param {boolean} reset
      *        Whether the players position should be reset or not
      */
     Player.prototype.setDead = function(dead, reset) {
@@ -325,9 +325,9 @@
 
     /**
      * Flag the player as having won a goal(reached the water) and set the animation timer
-     * @param {{boolean}} goal
+     * @param {boolean} goal
      *        Whether the player has won a goal or not
-     * @param {{boolean}} reset
+     * @param {boolean} reset
      *        Whether the players position should be reset or not
      */
     Player.prototype.setGoal = function(goal, reset) {
@@ -361,7 +361,7 @@
 
     /**
      * Update the position of the enemy by passing the delta time
-     * @param {{float}} dt
+     * @param {float} dt
      *         The delta time or the number of time that passed from the last
      *    time that the canvas is redrawn.
      */
@@ -403,13 +403,13 @@
      * Create a Collectible entity which will become the parent of other
      * collectible items
      * @constructor
-     * @param {{mixed}} sprites
+     * @param {mixed} sprites
      *      Either a string or array of string of images
-     * @param {{number}} offsetX
+     * @param {number} offsetX
      *        The collectible's horizontal offset position
-     * @param {{number}} offsetY
+     * @param {number} offsetY
      *        The collectible's vertical offset position
-     * @param {{object}} bounds
+     * @param {object} bounds
      *        The rectangle of the collectible inside its image
      */
     var Collectible = function(sprites, offsetX, offsetY, bounds) {

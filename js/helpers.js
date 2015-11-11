@@ -76,9 +76,9 @@
         },
         /**
          * return the indices of the blocks.
-         * @param {{string}} blocks
+         * @param {string} blocks
          *      A string that contains G, S, or W;
-         * @param {{string}} blockType
+         * @param {string} blockType
          *      A single letter that is either G, S, or W;
          */
         blockIndices: function(blocks, blockType) {
@@ -98,11 +98,11 @@
         },
         /**
          * return a random index of a block type from a list of blocks
-         * @param {{string}} blocks
+         * @param {string} blocks
          *      A string that contains G, S, or W only. E.g. "WSSSGG" means
          *      the first row is water, the 2nd to 4th row is stone and the
          *      last two rows will be grass.
-         * @param {{string}} blockType
+         * @param {string} blockType
          *      A single letter that is either G, S, or W;
          */
         randomIndex: function(blocks, blockType) {
