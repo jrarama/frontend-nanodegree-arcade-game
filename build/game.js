@@ -62,7 +62,16 @@
             return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x &&
                 rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y;
         },
+        /**
+         * This function checks if the upper edges or the lower edges of both rectangles
+         * are less than or equal to the minDistance
+         */
+        verticallyClose: function(rect1, rect2, minDistance) {
+            var y1 = Math.abs(rect1.y - rect2.y);
+            var y2 = Math.abs((rect1.y + rect1.height) - (rect2.y + rect2.height));
 
+            return Math.min(y1, y2) <= minDistance;
+        },
         /**
          * return the indices the the blocks.
          * @param {{string}} blocks
@@ -398,13 +407,10 @@
      */
     var Block = function(type, x, y) {
         // Use the constructor of its parent class Entity
-        Entity.call(this, Block.types[type], x, y);
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 0, y: 50, width: blockWidth, height: blockHeight };
+        Entity.call(this, Block.types[type], x, y, 0, 0, bounds);
         this.type = type;
-
-        /* We don't want to display rectangle bounds for blocks
-         * since we will not check for collision with it.
-         */
-        this.checkBounds = false;
     };
 
     /** Inherit properties and functions from Entity class */
@@ -1000,30 +1006,40 @@
             return false;
         }
         // check collision with enemies
-        var rect1 = player.getBounds();
+        var i, rect1 = player.getBounds();
 
-        allEnemies.forEach(function(enemy) {
+        for (i = 0; i < allEnemies.length; i ++) {
+            var enemy = allEnemies[i];
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
                 lives--;
 
                 Resources.setGameOver(lives === 0);
                 player.setDead(true);
-                return;
+                return false;
             }
-        });
+        }
 
         return !player.dead;
     }
 
     function checkGoal() {
+        var grid = Resources.getGrid();
         // Get the indices of water
-        var ind = Helpers.blockIndices(Resources.getGrid().rows, 'W');
-        var y = Math.round(player.y + 0.4);
-        if (ind.indexOf(y) > -1) {
-            player.y = y;
-            score++;
-            player.setGoal(true);
+        var ind = Helpers.blockIndices(grid.rows, 'W');
+        var i, x = ind * grid.nColumns;
+
+        var rect1 = player.getBounds();
+        var rect2;
+
+        for (i = x; i < x + grid.nColumns; i++) {
+            rect2 = blocks[i].getBounds();
+            if (Helpers.verticallyClose(rect1, rect2, 5)) {
+                player.y = ind;
+                score++;
+                player.setGoal(true);
+                return;
+            }
         }
     }
 
@@ -1056,7 +1072,7 @@
             rect2 = collectibles.key.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
                 changeRows = true;
-                score += 3;
+                score += 2;
                 collectibles.key = false;
             }
         }

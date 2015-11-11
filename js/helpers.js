@@ -62,7 +62,16 @@
             return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x &&
                 rect1.y < rect2.y + rect2.height && rect1.height + rect1.y > rect2.y;
         },
+        /**
+         * This function checks if the upper edges or the lower edges of both rectangles
+         * are less than or equal to the minDistance
+         */
+        verticallyClose: function(rect1, rect2, minDistance) {
+            var y1 = Math.abs(rect1.y - rect2.y);
+            var y2 = Math.abs((rect1.y + rect1.height) - (rect2.y + rect2.height));
 
+            return Math.min(y1, y2) <= minDistance;
+        },
         /**
          * return the indices the the blocks.
          * @param {{string}} blocks

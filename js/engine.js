@@ -175,30 +175,40 @@
             return false;
         }
         // check collision with enemies
-        var rect1 = player.getBounds();
+        var i, rect1 = player.getBounds();
 
-        allEnemies.forEach(function(enemy) {
+        for (i = 0; i < allEnemies.length; i ++) {
+            var enemy = allEnemies[i];
             var rect2 = enemy.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
                 lives--;
 
                 Resources.setGameOver(lives === 0);
                 player.setDead(true);
-                return;
+                return false;
             }
-        });
+        }
 
         return !player.dead;
     }
 
     function checkGoal() {
+        var grid = Resources.getGrid();
         // Get the indices of water
-        var ind = Helpers.blockIndices(Resources.getGrid().rows, 'W');
-        var y = Math.round(player.y + 0.4);
-        if (ind.indexOf(y) > -1) {
-            player.y = y;
-            score++;
-            player.setGoal(true);
+        var ind = Helpers.blockIndices(grid.rows, 'W');
+        var i, x = ind * grid.nColumns;
+
+        var rect1 = player.getBounds();
+        var rect2;
+
+        for (i = x; i < x + grid.nColumns; i++) {
+            rect2 = blocks[i].getBounds();
+            if (Helpers.verticallyClose(rect1, rect2, 5)) {
+                player.y = ind;
+                score++;
+                player.setGoal(true);
+                return;
+            }
         }
     }
 
@@ -231,7 +241,7 @@
             rect2 = collectibles.key.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
                 changeRows = true;
-                score += 3;
+                score += 2;
                 collectibles.key = false;
             }
         }

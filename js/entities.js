@@ -114,13 +114,10 @@
      */
     var Block = function(type, x, y) {
         // Use the constructor of its parent class Entity
-        Entity.call(this, Block.types[type], x, y);
+        // Set the boundary of the entity inside its image
+        var bounds = { x: 0, y: 50, width: blockWidth, height: blockHeight };
+        Entity.call(this, Block.types[type], x, y, 0, 0, bounds);
         this.type = type;
-
-        /* We don't want to display rectangle bounds for blocks
-         * since we will not check for collision with it.
-         */
-        this.checkBounds = false;
     };
 
     /** Inherit properties and functions from Entity class */
