@@ -3,6 +3,10 @@ Go For Water Game
 
 The objective of the game is for the player to reach the water, collect many collectibles (gem, star and key) to score points, and avoid the bugs to prevent losing a life.
 
+### How to Run
+
+To run the game, you just need to open the index.html file in a browser that supports HTML5. You can use the latest Google Chrome or Firefox browser.
+
 ### Controls
 
 **`Arrow` Keys** -
