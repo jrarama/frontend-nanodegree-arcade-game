@@ -3,11 +3,12 @@
  * All game entities are defined here. This file should be loaded before engine.js
  * where it will be used. As much as possible, there should be no reference to the Engine
  * class here because engine.js is not defined here at the moment. All parameters needed
- * by all entities must be passed either by its constructor or as an argument to its
- * functions.
+ * by all entities that are not globally available must be passed either by its constructor
+ * or as an argument to its functions.
  */
 (function() {
 
+    /** The default image height and width */
     var blockHeight = 83;
     var blockWidth = 101;
 
@@ -267,7 +268,8 @@
     };
 
     /**
-     * Animate the opacity of the player when it hits the water
+     * Animate the translate Y position of the player to emulate a jump animation
+     * when it hits the water
      */
     Player.prototype.goalAnimation = function(dt) {
         this.animationTimer -= dt;
@@ -284,8 +286,7 @@
     };
 
     /**
-     * This function resets the position of the player in its initial y
-     * position and random x position.
+     * This function resets the position and properties of the player.
      */
     Player.prototype.reset = function() {
         this.opacity = 1;
@@ -315,6 +316,7 @@
         }
     };
 
+    /** Set the variables used for player animation */
     Player.prototype.setAnimating = function(animate, time) {
         this.animating = animate;
         this.animationTimer = animate ? time : 0;
@@ -322,7 +324,7 @@
     };
 
     /**
-     * Flag the player as having won a goal and set the animation timer
+     * Flag the player as having won a goal(reached the water) and set the animation timer
      * @param {{boolean}} goal
      *        Whether the player has won a goal or not
      * @param {{boolean}} reset
@@ -397,15 +399,29 @@
     /** Inherit properties and functions from Entity class */
     Heart.inheritsFrom(Entity);
 
-
+    /**
+     * Create a Collectible entity which will become the parent of other
+     * collectible items
+     * @constructor
+     * @param {{mixed}} sprites
+     *      Either a string or array of string of images
+     * @param {{number}} offsetX
+     *        The collectible's horizontal offset position
+     * @param {{number}} offsetY
+     *        The collectible's vertical offset position
+     * @param {{object}} bounds
+     *        The rectangle of the collectible inside its image
+     */
     var Collectible = function(sprites, offsetX, offsetY, bounds) {
         var grid = Resources.getGrid();
 
         var sprite = sprites;
         if (sprites instanceof Array) {
+            // Pick a random item if an array
             sprite = Helpers.randomItem(sprites);
         }
 
+        // Select a random Stone row
         var y = Helpers.randomIndex(grid.rows, 'S');
         var x = Math.floor(Math.random() * grid.nColumns);
 

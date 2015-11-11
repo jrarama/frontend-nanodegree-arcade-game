@@ -48,9 +48,11 @@
         withinGrid: function(pos, rows, columns) {
             return pos && Helpers.within(pos.x, 0, columns - 1) && Helpers.within(pos.y, 0, rows - 1);
         },
+        /** Sets the variable drawBounds */
         setDrawBounds: function(bool) {
             drawBounds = bool;
         },
+        /** Gets the variable drawBounds */
         getDrawBounds: function() {
             return drawBounds;
         },
@@ -73,7 +75,7 @@
             return Math.min(y1, y2) <= minDistance;
         },
         /**
-         * return the indices the the blocks.
+         * return the indices of the blocks.
          * @param {{string}} blocks
          *      A string that contains G, S, or W;
          * @param {{string}} blockType
@@ -89,6 +91,7 @@
             }
             return ind;
         },
+        /** Pick a random item from an array of values */
         randomItem: function(array) {
             var rnd = Math.floor(Math.random() * array.length);
             return array[rnd];
@@ -108,9 +111,7 @@
             return ind[rnd];
         },
 
-        /**
-         * Shuffle an array
-         */
+        /** Shuffle an array */
         shuffleArray: function(array) {
             var currentIndex = array.length, temporaryValue, randomIndex ;
 

@@ -55,18 +55,29 @@
         down: false
     };
 
+    /** The map of screen collectibles for the current level */
     var collectibles = {
         key: false,
         gem: false,
         life: false
     };
 
+    /** Generate a new random combination of grid rows */
     function newGridRows() {
+        // Randomize the stone and grass rows
         var rows = Helpers.shuffleArray('SSSGG'.split('')).join('');
+
+        // Only put the water in the top or bottom of the screen
         rows = Helpers.shuffleArray(['W', rows]).join('');
+
+        // Set the new grid rows
         Resources.setGrid(rows);
     }
 
+    /**
+     * This function is used to determine which collectible will be
+     * visible given the current level
+     */
     function generateLevel(lvl) {
         collectibles = {
             life: lvl % 4 === 0,
@@ -170,6 +181,10 @@
         player.update(dt);
     }
 
+    /**
+     * This function checks whether the player or any of the enemies have
+     * touched each other. If they did, the player will die.
+     */
     function checkCollisions() {
         if (player.dead) {
             return false;
@@ -192,10 +207,14 @@
         return !player.dead;
     }
 
+    /**
+     * This function checks whether the player have reached the water.
+     * If it did, the game will proceed to the next level.
+     */
     function checkGoal() {
         var grid = Resources.getGrid();
-        // Get the indices of water
-        var ind = Helpers.blockIndices(grid.rows, 'W');
+        // Get the row index of water
+        var ind = Helpers.blockIndices(grid.rows, 'W')[0];
         var i, x = ind * grid.nColumns;
 
         var rect1 = player.getBounds();
@@ -212,6 +231,10 @@
         }
     }
 
+    /**
+     * This function checks if any of the collectibles are touched by
+     * the player. Each type of collectible have different values.
+     */
     function checkPowerUps() {
         if (player.animating) {
             return;
@@ -219,6 +242,7 @@
         checkGoal();
         var rect2 = null, rect1 = player.getBounds();
 
+        /* Touching a gem will give you 1 extra score */
         if (collectibles.gem) {
             rect2 = collectibles.gem.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
@@ -226,6 +250,7 @@
                 collectibles.gem = false;
             }
         }
+        /* Touching a star will give you 2 extra score and 1 extra life */
         if (collectibles.life) {
             rect2 = collectibles.life.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
@@ -237,6 +262,9 @@
                 collectibles.life = false;
             }
         }
+        /* Touching a key will give you 2 extra score and the grid row
+         * will change in the next level.
+         */
         if (collectibles.key) {
             rect2 = collectibles.key.getBounds();
             if (Helpers.rectCollision(rect1, rect2)) {
@@ -255,25 +283,28 @@
      * they are just drawing the entire screen over and over.
      */
     function render() {
-        var i, heart;
+        var i;
+        // Clear the screen
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Render the blocks
         blocks.forEach(function(block) {
             block.render();
         });
 
+        // Render the lives
         for(i = 0; i < allLives.length; i ++) {
-            heart = allLives[i];
+            var heart = allLives[i];
             heart.opacity = i >= lives ? 0.4 : 1;
             heart.render();
         }
 
-        renderCollectibles();
-        renderEntities();
-
         renderScore();
         renderLevel();
+
+        renderCollectibles();
+        renderEntities();
 
         if (menu) {
             menu.render();
@@ -297,6 +328,7 @@
         player.render();
     }
 
+    /** Render the collectibles if they are available for the current level */
     function renderCollectibles() {
         if (collectibles.key) {
             collectibles.key.render();
@@ -310,9 +342,7 @@
     }
 
     /**
-     * This function does nothing but it could have been a good place to
-     * handle game reset states - maybe a new game menu or a game over screen
-     * those sorts of things. It's only called once by the init() method.
+     * This function handles the game reset states.
      */
     function reset() {
         generateLevel(0);
@@ -351,7 +381,7 @@
     }
 
     /**
-     * This function is called within the init function which is used
+     * This function is called within the initLevel function which is used
      * to initialize all the entities
      */
     function initEntities() {
@@ -365,6 +395,7 @@
         initHearts();
     }
 
+    /** This function initialize each level */
     function initLevel() {
         if (changeRows) {
             newGridRows();
@@ -376,6 +407,10 @@
         initEntities();
     }
 
+    /**
+     * This function is called within the initLevel function which is used
+     * to initialize all the collectibles
+     */
     function initCollectibles() {
         if (collectibles.key === true) {
             collectibles.key = new Key();
@@ -455,10 +490,13 @@
         }
 
         switch (e.keyCode) {
-            case 27: // Escape key
+            // Escape key
+            case 27:
                 if (!Resources.isGameOver()) {
-                    paused = !paused; // Toggle pause
+                    // Toggle pause when ESC key is pressed
+                    paused = !paused;
                 } else {
+                    // Start a new game when it is game over
                     init();
                 }
                 break;
@@ -505,6 +543,7 @@
         ctx.restore();
     }
 
+    /** Render the level on the top center of the screen */
     function renderLevel() {
         ctx.save();
 

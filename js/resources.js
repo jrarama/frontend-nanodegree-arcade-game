@@ -1,5 +1,9 @@
 /* Resources.js
- * This is simple an image loading utility. It eases the process of loading
+ * This file is used to store the game's resources and variables such as the images,
+ * game canvas, game grid and state. It caches all these values so that they can
+ * easily be accessed from the game.
+ *
+ * It contains a simple image loading utility. It eases the process of loading
  * image files so that they can be used within your game. It also includes
  * a simple "caching" layer so it will reuse cached images if you attempt
  * to load the same image multiple times.
@@ -138,18 +142,22 @@
             return grid;
         },
 
+        /** Set if the game is already over */
         setGameOver: function(over) {
             gameOver = over;
         },
 
+        /** Check if the game is over */
         isGameOver: function() {
             return gameOver;
         },
 
+        /** Sets the image path */
         setImagePath: function(path) {
             imagePath = path || imagePath;
         },
 
+        /** Gets the image path */
         getImagePath: function() {
             return imagePath;
         }

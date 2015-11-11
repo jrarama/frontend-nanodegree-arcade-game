@@ -1,10 +1,20 @@
+/* Menu.js
+ * All entities for drawing for the game title and game menus will be placed here.
+ */
 (function() {
     var gameTitle = 'Go For Water';
+
+    /**
+     * The Game title
+     */
     function GameTitle() {
         this.timer = 0;
         this.y = 0;
     }
 
+    /**
+     * Update the Y position of the Game title based on delta time
+     */
     GameTitle.prototype.update = function(dt) {
         this.timer += dt;
         if (this.timer > 5) {
@@ -14,6 +24,7 @@
         this.y = this.timer < 4 ? ease(this.timer) : ease(5 - this.timer);
     };
 
+    /** Render the game title */
     GameTitle.prototype.render = function() {
         var ctx = Resources.getContext();
         ctx.save();
@@ -32,10 +43,15 @@
         ctx.restore();
     };
 
+    /** The game menu entity */
     function Menu() {
+        /* Create a title property for the menu */
         this.title = new GameTitle();
-        this.begin = true;
-        this.paused = false;
+
+        /* TODO: Add other properties for the menus, such as player selection screen,
+         * pause menu, etc.
+         */
+
         this.timer = 0;
     }
 
@@ -51,15 +67,19 @@
         return Math.pow(2,-10*t) * Math.sin((t*d-s)*(2*Math.PI)/p ) + 1;
     }
 
+    /** Update all the menu entities */
     Menu.prototype.update = function(dt) {
         this.title.update(dt);
+        // TODO: other Menu entities' update calls
         this.timer += dt;
     };
 
+    /** Render all the menu entities */
     Menu.prototype.render = function() {
         this.title.render();
+        // TODO: other Menu entities' render calls
     };
 
-
+    /** Expose the Menu globally as GameMenu */
     window.GameMenu = Menu;
 })();
