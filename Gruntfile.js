@@ -17,6 +17,7 @@ module.exports = function(grunt) {
                     './js/helpers.js',
                     './js/resources.js',
                     './js/entities.js',
+                    './js/menu.js',
                     './js/engine.js',
                     './js/app.js'
                 ],
@@ -42,7 +43,7 @@ module.exports = function(grunt) {
                 eqnull: true,
                 predef: ['console', 'window', 'document', 'Image', 'Resources',
                     'Player', 'Block', 'Enemy', 'Engine', 'Helpers', 'Heart',
-                    'Key', 'Star', 'Gem'
+                    'Key', 'Star', 'Gem', 'GameMenu'
                 ]
             }
         },

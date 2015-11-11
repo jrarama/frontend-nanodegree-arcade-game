@@ -30,6 +30,8 @@
         score = 0,
         level = 1,
         changeRows,
+        menu,
+        timer = 0,
         lives;
 
     Resources.setContext(ctx);
@@ -67,9 +69,9 @@
 
     function generateLevel(lvl) {
         collectibles = {
-            key: lvl % 7 === 0,
-            life: lvl % 5 === 0,
-            gem: lvl % 2 === 0
+            life: lvl % 4 === 0,
+            key: lvl % 3 === 0,
+            gem: lvl % 1 === 0
         };
     }
 
@@ -86,6 +88,7 @@
          */
         var now = Date.now(),
             dt = (now - lastTime) / 1000.0;
+        timer += dt;
 
         /* Call our update/render functions, pass along the time delta to
          * our update function since it may be used for smooth animation.
@@ -114,6 +117,7 @@
      */
     function init() {
         reset();
+        menu = new GameMenu();
         /* Initialize the level */
         initLevel();
 
@@ -129,6 +133,13 @@
      * should die) here.
      */
     function update(dt) {
+        if (timer >= 5) {
+            menu = false;
+        }
+
+        if (menu) {
+            menu.update(dt);
+        }
         updateEntities(dt);
 
         if (!Resources.isGameOver()) {
@@ -253,6 +264,10 @@
 
         renderScore();
         renderLevel();
+
+        if (menu) {
+            menu.render();
+        }
 
         if (Resources.isGameOver()) {
             renderGameOver();
