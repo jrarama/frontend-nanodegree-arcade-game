@@ -10,7 +10,8 @@ To run the game, you just need to open the index.html file in a browser that sup
 ### Controls
 
 **`Arrow` Keys** -
-Use the Arrow Keys to move the player.
+Use the Arrow Keys to move the player `up`, `down`, `left` or `right` of the screen. You can also press two arrow keys at once to move to their combined direction. E.g. Pressing `Up` and `Left` Arrow Keys will move the player to the North West direction of the screen.
+
 
 **`ESC` Key** -
 During the game, press the `Esc` key to pause the game. When the game is over, press the `Esc` key to play a *New Game*.
