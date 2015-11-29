@@ -1,6 +1,8 @@
 Go For Water Game
 =================
 
+Go to the [game's website](http://jrarama.github.io/go-for-water-game/) to play the game.
+
 The objective of the game is for the player to reach the water, collect many collectibles (gem, star and key) to score points, and avoid the bugs to prevent losing a life.
 
 ### How to Run
