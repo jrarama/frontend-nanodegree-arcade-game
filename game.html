@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Go For Water Game by jrarama</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Exo:400,800italic" rel="stylesheet">
+  </head>
+  <body>
+    <div id="game-container" style="text-align: center"></div>
+    <script src="https://cdn.rawgit.com/jrarama/go-for-water-game/master/build/game.min.js"></script>
+    <script>
+      window.addEventListener("load", function(event) {
+        Engine.init(document.getElementById('game-container'), {
+          imagePath: 'https://cdn.rawgit.com/jrarama/go-for-water-game/master/images/'
+        });
+      });
+    </script>
+  </body>
+</html>
