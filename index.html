@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-	<script src="build/game.js"></script>
+    <div id="game-container"></div>
+	<script src="build/game.min.js"></script>
+    <script>
+        window.addEventListener("load", function(event) {
+            Engine.init(document.getElementById('game-container'));
+        });
+    </script>
 </body>
 </html>

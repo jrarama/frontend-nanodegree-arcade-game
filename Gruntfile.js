@@ -18,8 +18,7 @@ module.exports = function(grunt) {
                     './js/resources.js',
                     './js/entities.js',
                     './js/menu.js',
-                    './js/engine.js',
-                    './js/app.js'
+                    './js/engine.js'
                 ],
                 dest: './build/game.js',
             }

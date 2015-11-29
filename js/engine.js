@@ -37,7 +37,6 @@
     Resources.setContext(ctx);
     canvas.width = 505;
     canvas.height = 606;
-    doc.body.appendChild(canvas);
 
     /** This variable is the definition of valid move keys */
     var movementKeys = {
@@ -590,7 +589,8 @@
      * made public.
      */
     window.Engine = {
-        init: function(opts) {
+        init: function(container, opts) {
+            container.appendChild(canvas);
             // Initilize grid options if present
             var o = opts || {};
             if (o.grid) {
